@@ -166,3 +166,5 @@ data/
 # Weights & Biases files 
 */wandb
 */artifacts
+*/*/wandb
+*/*/artifacts
