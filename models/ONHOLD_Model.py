@@ -5,6 +5,7 @@ from transformers import T5Tokenizer, T5EncoderModel, pipeline
 import re
 
 def createEmbedding(aa_sequence, device): 
+    # TODO: consider to fine-tune the Prot-T5-XL model while training
     transformer_link = "Rostlab/prot_t5_xl_half_uniref50-enc"
     print("Loading: {}".format(transformer_link))
     model = T5EncoderModel.from_pretrained(transformer_link)
