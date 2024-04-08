@@ -159,10 +159,6 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
 
-# Custom ignores here:
-# Datasets should not be on GitHub => too big
-data/
-
 # Weights & Biases files 
 wandb
 */wandb
