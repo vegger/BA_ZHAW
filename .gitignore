@@ -164,6 +164,7 @@ cython_debug/
 data/
 
 # Weights & Biases files 
+wandb
 */wandb
 */artifacts
 */*/wandb
