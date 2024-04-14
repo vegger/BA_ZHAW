@@ -11,7 +11,7 @@ general_protein_df = pd.read_csv("../data/UniProt/generalProteinBinding.tsv", se
 
 
 # %%
-num_samples = 100000
+num_samples = 250000
 general_protein_df = general_protein_df.sample(n=num_samples)
 general_protein_df
 
@@ -19,7 +19,6 @@ general_protein_df
 ORGANISM_HUMAN_ID = 9606
 
 def fetch_uniprot_sequence(gene_symbol):
-    # url = "https://rest.uniprot.org/uniprotkb/stream"
     url = "https://rest.uniprot.org/uniprotkb/search?"
     params = {
         "query": f'(gene_exact:"{gene_symbol}" AND organism_id:{ORGANISM_HUMAN_ID})',
@@ -62,7 +61,7 @@ proteins = []
 
 # %%
 to_path = "../data/GeneralProteinBinding/"
-file_name = "general_proteins_11_04_24.tsv"
+file_name = "general_proteins_14_04_24.tsv"
 full_path = to_path + file_name
 
 
