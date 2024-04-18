@@ -8,10 +8,10 @@ class Paired(Dataset):
         """
         Initialize dataset paths and optional transformations.
         """
-        self.file_path = "./samples.tsv"
-        self.epitope_embeddings_path = "./paired/paired_epitope_embeddings.npz"
-        self.tra_embeddings_path = "./paired/paired_TRA_CDR3_embeddings.npz"
-        self.trb_embeddings_path = "./paired/paired_TRB_CDR3_embeddings.npz"
+        self.file_path = "./Dataclasses/no_Stitchr/samples.tsv"
+        self.epitope_embeddings_path = "../data/Embeddings/paired/paired_epitope_embeddings.npz"
+        self.tra_embeddings_path = "../data/Embeddings/paired/paired_TRA_CDR3_embeddings.npz"
+        self.trb_embeddings_path = "../data/Embeddings/paired/paired_TRB_CDR3_embeddings.npz"
         self.transform = transform
 
         # Load the entire DataFrame
@@ -79,7 +79,7 @@ class Paired(Dataset):
 
         return max_length
     
-    
+
 if __name__ == "__main__":
         dataset = Paired()
 
