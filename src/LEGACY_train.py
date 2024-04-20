@@ -6,8 +6,8 @@ import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, random_split
 from pytorch_lightning.callbacks import ModelCheckpoint
-from modelV1 import ModelV1
-from paired import Paired  
+from models.modelV1 import ModelV1
+from Dataclasses.no_Stitchr.paired import Paired  
 # from dotenv import load_dotenv
 
 
@@ -26,7 +26,7 @@ EPSILON = 1e-9
 
 
 BATCH_SIZE = 32
-EPOCHS = 150
+EPOCHS = 1
 # keep NUM_WORKERS = 0 as long as debugging
 NUM_WORKERS = 0
 
@@ -119,7 +119,7 @@ def main():
 
 
     train_data, test_data = random_split(dataset, (0.8, 0.2))
-
+    print(f"dataset is {type(dataset)} and train is {type(train_data)}")
     # create samplers
     train_sampler = RandomSampler(train_data)
     test_sampler = SequentialSampler(test_data)
