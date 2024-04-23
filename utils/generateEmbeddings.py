@@ -25,17 +25,6 @@ model = model.to(device)
 model = model.eval()
 tokenizer = T5Tokenizer.from_pretrained(transformer_link, do_lower_case=False, legacy=True)
 
-'''
-1. load model and all these things 
-2. load corresponding df 
-3. create embeddings 
-4. store it ad .npz 
-5. call garbage collector
-    import gc
-
-    then after model instansiating: 
-    gc.collect()
-'''
 
 def load_data(file_name): 
     base_path = "../data/customDatasets/negative_samples/"
