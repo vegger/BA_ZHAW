@@ -27,7 +27,7 @@ tokenizer = T5Tokenizer.from_pretrained(transformer_link, do_lower_case=False, l
 
 
 def load_data(file_name): 
-    base_path = "../data/customDatasets/negative_samples/"
+    base_path = "../data/customDatasets/Embeddings/"
     df = pd.read_csv(base_path+file_name, sep="\t")
 
     return df
@@ -49,7 +49,7 @@ def process_batch(processed_seqs):
     for i, (original_seq, _) in enumerate(processed_seqs):
         seq_len = len(original_seq)
         valid_embeddings = last_hidden_states[i,:seq_len]
-        per_protein_embedding = valid_embeddings.mean(dim=0)        
+        per_protein_embedding = valid_embeddings       
         embedding = per_protein_embedding.cpu().numpy()
         embeddings[original_seq] = embedding  # Use original sequence as key
 
