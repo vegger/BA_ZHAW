@@ -173,7 +173,6 @@ class VanillaModel(pl.LightningModule):
         trb_j_embed = self.trbJ_embed(torch.tensor(j_beta).to(self.device_)).unsqueeze(0).permute(1, 0, 2)
         tra_j_embed = self.traJ_embed(torch.tensor(j_alpha).to(self.device_)).unsqueeze(0).permute(1, 0, 2)
         mhc_embed = self.mhc_embed(torch.tensor(mhc).to(self.device_)).unsqueeze(0).permute(1, 0, 2)
-        # tra_j_embed = self.get_batchwise_embeddings(self.tra_J_dict, self.traJ_embed, j_alpha).unsqueeze(0).permute(1, 0, 2)
         
         '''
         print(f"tra_v_embed: {tra_v_embed.shape}")
