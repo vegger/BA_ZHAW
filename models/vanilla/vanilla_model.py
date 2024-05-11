@@ -8,7 +8,7 @@ from torchmetrics.classification import BinaryAUROC, BinaryAveragePrecision
 
 
 class TransformerBlock(nn.Module):
-    def __init__(self, embed_dim, n_heads,output_attn_w=False, n_hidden=64, dropout=0.1):
+    def __init__(self, embed_dim, n_heads, output_attn_w=False, n_hidden=64, dropout=0.1):
         """
         Args:
           embed_dim: Number of input and output features.
@@ -219,7 +219,7 @@ class VanillaModel(pl.LightningModule):
 
         # print(f"this is y in training_step: {y}\n\n\n")
         loss = F.binary_cross_entropy_with_logits(output, label)
-        self.log("train_loss", loss, on_step=True, prog_bar=True)
+        self.log("train_loss", loss, on_step=True, prog_bar=True, batch_size=len(batch))
         return loss
 
 
@@ -241,8 +241,7 @@ class VanillaModel(pl.LightningModule):
         self.test_predictions.append(prediction)
         self.test_labels.append(label)
         self.test_tasks.append(task[0])
-        # print(f"x is y in test_step: {y}\n")
-        # print(f"this is y.shape in test_step: {y.shape}\n")
+
         test_loss = F.binary_cross_entropy_with_logits(output, label)
         self.log("test_loss", test_loss, batch_size=len(batch))
         
@@ -297,13 +296,9 @@ class VanillaModel(pl.LightningModule):
         j_beta = batch["j_beta"]
         mhc = batch["mhc"]
         label = batch["label"]
-        # print(f"val: y: {y}")
-        # print(f"val: y.shape: {y.shape}")
         
         output = self(epitope_embedding, tra_cdr3_embedding, trb_cdr3_embedding, v_alpha, j_alpha, v_beta, j_beta, mhc).squeeze(1)
         
-        # print(f"y.dtype: {y.dtype}")
-        # print(f"this is y in test_step: {y}\n\n\n")
         val_loss = F.binary_cross_entropy_with_logits(output, label)
         self.log("val_loss", val_loss, batch_size=len(batch))
         
@@ -321,8 +316,8 @@ class VanillaModel(pl.LightningModule):
         optimizer = self.hyperparameters["optimizer"]
         learning_rate = self.hyperparameters["learning_rate"]
         weight_decay = self.hyperparameters["weight_decay"]
-        # betas = self.hyperparameters["betas_adam"]
         betas = (0.9, 0.98)
+        
         if optimizer == "sgd": 
             optimizer = torch.optim.SGD(self.parameters(),
                         lr=learning_rate, momentum=0.9)        
@@ -332,7 +327,3 @@ class VanillaModel(pl.LightningModule):
             print("OPTIMIZER NOT FOUND")
         
         return optimizer
-
-
-if __name__ == "__main__":
-    print("nothing do to here!")
