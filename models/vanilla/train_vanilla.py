@@ -20,7 +20,7 @@ torch.manual_seed(42)
 MODEL_NAME = "VanillaModel"
 EMBEDDING_SIZE = 1024
 BATCH_SIZE = 128
-EPOCHS = 25
+EPOCHS = 250
 # IMPORTANT: keep NUM_WORKERS = 0!
 NUM_WORKERS = 0
 
@@ -127,7 +127,7 @@ def main():
     # data (from W&B)
     # -----------------------------------------------------------------------------
     # Download corresponding artifact (= dataset) from W&B
-    precision = "gene" # or Allele
+    precision = "gene" # or allele
     dataset_name = f"paired_{precision}"
     artifact = run.use_artifact(f"{dataset_name}:latest")
     data_dir = artifact.download(f"../WnB_Experiments_Datasets/paired_{precision}")
@@ -197,15 +197,15 @@ def main():
     # ---------------------------------------------------------------------------------
     # model 
     # ---------------------------------------------------------------------------------
-    # hyperparameters = set_hyperparameters(config)
-    
+    hyperparameters = set_hyperparameters(config)
+    '''
     hyperparameters = {}
     hyperparameters["optimizer"] = "adam"
     hyperparameters["learning_rate"] = 5e-3
     hyperparameters["weight_decay"] = 0.075
     hyperparameters["dropout_attention"] = 0.3
     hyperparameters["dropout_linear"] = 0.45
-    
+    '''
     model = VanillaModel(EMBEDDING_SIZE, SEQ_MAX_LENGTH, DEVICE, traV_embed_len, traJ_embed_len, trbV_embed_len, trbJ_embed_len, mhc_embed_len, hyperparameters)
     # ---------------------------------------------------------------------------------
     # training
