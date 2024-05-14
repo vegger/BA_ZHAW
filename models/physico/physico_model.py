@@ -111,16 +111,16 @@ class MLP_Physico(nn.Module):
 class MLP_Physico(nn.Module): 
     def __init__(self, input_dim, hidden_dim, output_dim, dropout_linear): 
         super(MLP_Physico, self).__init__()
+        self.bn1 = nn.BatchNorm1d(input_dim)
         self.layer1 = nn.Linear(input_dim, hidden_dim)
         self.relu = nn.ReLU()
-        # self.res_block1 = ResidualBlock(hidden_dim, dropout_linear)
         self.dropout = nn.Dropout(dropout_linear)
         self.final_layer = nn.Linear(hidden_dim, output_dim)
 
-    def forward(self, x): 
+    def forward(self, x):
+        x = self.bn1(x)
+        x = self.relu(x) 
         x = self.layer1(x)
-        x = self.relu(x)
-        # x = self.res_block1(x)
         x = self.dropout(x)
         x = self.final_layer(x)
         return x
@@ -328,8 +328,8 @@ class PhysicoModel(pl.LightningModule):
 
     def on_test_epoch_end(self):
         test_predictions = torch.stack(self.test_predictions)
-        print(f"self.test_preditions: {self.test_preditions}")
-        print(f"test_predictions: {test_predictions}")
+        # print(f"self.test_preditions: {self.test_predictions}")
+        # print(f"test_predictions: {test_predictions}")
         test_labels = torch.stack(self.test_labels)
         # print(f"on_test_epoch_end, test_labels: {test_labels}")
         test_tasks = self.test_tasks
