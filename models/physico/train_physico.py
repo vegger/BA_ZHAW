@@ -19,8 +19,8 @@ torch.manual_seed(42)
 # ---------------------------------------------------------------------------------
 MODEL_NAME = "PhysicoModel"
 EMBEDDING_SIZE = 1024
-BATCH_SIZE = 128
-EPOCHS = 1
+BATCH_SIZE = 512
+EPOCHS = 275
 # IMPORTANT: keep NUM_WORKERS = 0!
 NUM_WORKERS = 0
 
@@ -126,7 +126,7 @@ def main():
     # W&B Setup
     # -----------------------------------------------------------------------------
 
-    experiment_name = f"Experiment - {MODEL_NAME}"
+    experiment_name = f"Experiment3 (smaller lr) - {MODEL_NAME}"
     load_dotenv()
     PROJECT_NAME = os.getenv("MAIN_PROJECT_NAME")
     print(f"PROJECT_NAME: {PROJECT_NAME}")
@@ -218,15 +218,15 @@ def main():
     # ---------------------------------------------------------------------------------
     # model 
     # ---------------------------------------------------------------------------------
-    # hyperparameters = set_hyperparameters(config)
-    
+    hyperparameters = set_hyperparameters(config)
+    '''
     hyperparameters = {}
-    hyperparameters["optimizer"] = "adam"
-    hyperparameters["learning_rate"] = 5e-3
+    hyperparameters["optimizer"] = "sgd"
+    hyperparameters["learning_rate"] = 0.0001
     hyperparameters["weight_decay"] = 0.075
     hyperparameters["dropout_attention"] = 0.3
-    hyperparameters["dropout_linear"] = 0.45
-    
+    hyperparameters["dropout_linear"] = 0.50
+    '''
     model = PhysicoModel(EMBEDDING_SIZE, SEQ_MAX_LENGTH, DEVICE, traV_embed_len, traJ_embed_len, trbV_embed_len, trbJ_embed_len, mhc_embed_len, hyperparameters)
     # ---------------------------------------------------------------------------------
     # training
