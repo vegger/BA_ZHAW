@@ -248,7 +248,7 @@ class VanillaModel(pl.LightningModule):
     
 
     def on_test_epoch_end(self):
-        test_preditions = torch.stack(self.test_predictions)
+        test_predictions = torch.stack(self.test_predictions)
         test_labels = torch.stack(self.test_labels)
         # print(f"on_test_epoch_end, test_labels: {test_labels}")
         test_tasks = self.test_tasks
@@ -260,16 +260,16 @@ class VanillaModel(pl.LightningModule):
         for i, task in enumerate(test_tasks):
             if task == "TPP1": 
                 # print(f"task 1: {task}")
-                tpp_1.append((test_preditions[i], test_labels[i]))
+                tpp_1.append((test_predictions[i], test_labels[i]))
             if task == "TPP2": 
                 # print(f"task 2: {task}")
-                tpp_2.append((test_preditions[i], test_labels[i]))
+                tpp_2.append((test_predictions[i], test_labels[i]))
             if task == "TPP3": 
                 # print(f"task 3: {task}")
-                tpp_3.append((test_preditions[i], test_labels[i]))
+                tpp_3.append((test_predictions[i], test_labels[i]))
  
-        self.log("ROCAUC_Test_global", self.auroc(test_preditions, test_labels), prog_bar=True)
-        self.log("AP_Test_global", self.avg_precision(test_preditions, test_labels.to(torch.long)), prog_bar=True)
+        self.log("ROCAUC_Test_global", self.auroc(test_predictions, test_labels), prog_bar=True)
+        self.log("AP_Test_global", self.avg_precision(test_predictions, test_labels.to(torch.long)), prog_bar=True)
 
         self.log("ROCAUC_Test_TPP1", self.auroc(torch.tensor([item[0] for item in tpp_1]), torch.tensor([item[1] for item in tpp_1]).to(torch.long)), prog_bar=True)
         self.log("AP_Test_TPP1", self.avg_precision(torch.tensor([item[0] for item in tpp_1]), torch.tensor([item[1] for item in tpp_1]).to(torch.long)), prog_bar=True) 
