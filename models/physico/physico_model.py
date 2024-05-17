@@ -329,7 +329,7 @@ class PhysicoModel(pl.LightningModule):
     def on_test_epoch_end(self):
         test_predictions = torch.stack(self.test_predictions)
         # print(f"self.test_preditions: {self.test_predictions}")
-        # print(f"test_predictions: {test_predictions}")
+        # print(f"test_predictions: {test_predictions}")
         test_labels = torch.stack(self.test_labels)
         # print(f"on_test_epoch_end, test_labels: {test_labels}")
         test_tasks = self.test_tasks

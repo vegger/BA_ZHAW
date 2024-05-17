@@ -130,7 +130,7 @@ def main():
     precision = "gene" # or allele
     dataset_name = f"paired_{precision}"
     artifact = run.use_artifact(f"{dataset_name}:latest")
-    data_dir = artifact.download(f"../WnB_Experiments_Datasets/paired_{precision}")
+    data_dir = artifact.download(f"./WnB_Experiments_Datasets/paired_{precision}")
     
     train_file_path = f"{data_dir}/{precision}/train.tsv"
     test_file_path = f"{data_dir}/{precision}/test.tsv"
