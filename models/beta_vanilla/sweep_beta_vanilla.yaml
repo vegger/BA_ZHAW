@@ -1,0 +1,22 @@
+# command to run: wandb sweep --project BA_Project_ZHAW --entity ba-zhaw sweep_beta_vanilla.yaml
+program: train_beta_vanilla.py
+method: bayes  # grid, random, or bayes optimization
+metric:
+  name: AP_Val
+  goal: maximize
+parameters:
+  learning_rate:
+    min: 0.0001
+    max: 0.1
+  weight_decay:
+    min: 0.00001
+    max: 0.01
+  optimizer:
+    values: ["adam", "sgd"]
+  dropout_attention:
+    min: 0.12
+    max: 0.22
+  dropout_linear:
+    min: 0.45
+    max: 0.55
+    
