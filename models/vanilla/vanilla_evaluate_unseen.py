@@ -42,14 +42,18 @@ class PadCollate:
     def pad_collate(self, batch):
         epitope_embeddings, tra_cdr3_embeddings, trb_cdr3_embeddings = [], [], []
         v_alpha, j_alpha, v_beta, j_beta = [], [], [], []
+        epitope_sequence, tra_cdr3_sequence, trb_cdr3_sequence = [], [], []
         mhc = []
         task = []
         labels = []
 
         for item in batch:
             epitope_embeddings.append(item["epitope_embedding"])
+            epitope_sequence.append(item["epitope_sequence"])
             tra_cdr3_embeddings.append(item["tra_cdr3_embedding"])
+            tra_cdr3_sequence.append(item["tra_cdr3_sequence"])
             trb_cdr3_embeddings.append(item["trb_cdr3_embedding"])
+            trb_cdr3_sequence.append(item["trb_cdr3_sequence"])
             v_alpha.append(item["v_alpha"])
             j_alpha.append(item["j_alpha"])
             v_beta.append(item["v_beta"])
@@ -74,8 +78,11 @@ class PadCollate:
 
         return {
             "epitope_embedding": epitope_embeddings,
+            "epitope_sequence": epitope_sequence,
             "tra_cdr3_embedding": tra_cdr3_embeddings,
+            "tra_cdr3_sequence": tra_cdr3_sequence,
             "trb_cdr3_embedding": trb_cdr3_embeddings,
+            "trb_cdr3_sequence": trb_cdr3_sequence,
             "v_alpha": v_alpha,
             "j_alpha": j_alpha,
             "v_beta": v_beta,
@@ -124,7 +131,8 @@ def main():
 
     embed_base_dir = "/teamspace/studios/this_studio/BA/paired"
 
-    unseen_test_dataset = PairedVanilla(unseen_test_file_path, embed_base_dir, traV_dict, traJ_dict, trbV_dict, trbJ_dict, mhc_dict)
+    # unseen_test_dataset = PairedVanilla(unseen_test_file_path, embed_base_dir, traV_dict, traJ_dict, trbV_dict, trbJ_dict, mhc_dict)
+    test_dataset = PairedVanilla(test_file_path, embed_base_dir, traV_dict, traJ_dict, trbV_dict, trbJ_dict, mhc_dict)
 
     # can be seen in the W&B log
     SEQ_MAX_LENGTH = 30
@@ -132,10 +140,12 @@ def main():
     pad_collate = PadCollate(SEQ_MAX_LENGTH).pad_collate
 
     generator = torch.Generator().manual_seed(42)
-    test_sampler = SequentialSampler(unseen_test_dataset)
+    # test_sampler = SequentialSampler(unseen_test_dataset)
+    test_sampler = SequentialSampler(test_dataset)
 
     test_dataloader = DataLoader(
-        unseen_test_dataset,
+        # unseen_test_dataset,
+        test_dataset,
         batch_size=1,
         sampler=test_sampler,
         num_workers=NUM_WORKERS,

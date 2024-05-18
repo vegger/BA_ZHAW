@@ -111,6 +111,9 @@ class VanillaModel(pl.LightningModule):
         self.test_predictions = []
         self.test_labels = []
         self.test_tasks = []
+        self.epitopes = []
+        self.tra_cdr3s = []
+        self.trb_cdr3s = []
         
         self.allele_info_dim = 1024
         # print(f"traV_embed_len: {traV_embed_len}")
@@ -224,8 +227,11 @@ class VanillaModel(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         epitope_embedding = batch["epitope_embedding"]
+        epitope_sequence = batch["epitope_sequence"]
         tra_cdr3_embedding = batch["tra_cdr3_embedding"]
+        tra_cdr3_sequence = batch["tra_cdr3_sequence"]
         trb_cdr3_embedding = batch["trb_cdr3_embedding"]
+        trb_cdr3_sequence = batch["trb_cdr3_sequence"]
         v_alpha = batch["v_alpha"]
         j_alpha = batch["j_alpha"]
         v_beta = batch["v_beta"]
@@ -240,19 +246,26 @@ class VanillaModel(pl.LightningModule):
         self.test_predictions.append(prediction)
         self.test_labels.append(label)
         self.test_tasks.append(task[0])
+        self.epitopes.append(epitope_sequence)
+        self.tra_cdr3s.append(tra_cdr3_sequence)
+        self.trb_cdr3s.append(trb_cdr3_sequence)
 
         test_loss = F.binary_cross_entropy_with_logits(output, label)
         self.log("test_loss", test_loss, batch_size=len(batch))
         
         return test_loss, prediction, label
     
-
+    
     def on_test_epoch_end(self):
         test_predictions = torch.stack(self.test_predictions)
         test_labels = torch.stack(self.test_labels)
         # print(f"on_test_epoch_end, test_labels: {test_labels}")
         test_tasks = self.test_tasks
-    
+
+        print(f"len(self.test_predictions): {len(self.test_predictions)}")
+        print(f"len(self.test_labels): {len(self.test_labels)}")
+        print(f"len(self.test_tasks): {len(self.test_tasks)}")
+
         tpp_1 = []
         tpp_2 = []
         tpp_3 = []
@@ -261,12 +274,17 @@ class VanillaModel(pl.LightningModule):
             if task == "TPP1": 
                 # print(f"task 1: {task}")
                 tpp_1.append((test_predictions[i], test_labels[i]))
-            if task == "TPP2": 
-                # print(f"task 2: {task}")
+            elif task == "TPP2": 
+                # print(f"task 2: {task}")
                 tpp_2.append((test_predictions[i], test_labels[i]))
-            if task == "TPP3": 
-                # print(f"task 3: {task}")
+            elif task == "TPP3": 
+                # print(f"task 3: {task}")
                 tpp_3.append((test_predictions[i], test_labels[i]))
+            elif task == "TPP4":
+                # print("in TPP4")
+                continue
+            else: 
+                print("ERROR IN TASK")
  
         self.log("ROCAUC_Test_global", self.auroc(test_predictions, test_labels), prog_bar=True)
         self.log("AP_Test_global", self.avg_precision(test_predictions, test_labels.to(torch.long)), prog_bar=True)
@@ -279,6 +297,34 @@ class VanillaModel(pl.LightningModule):
         
         self.log("ROCAUC_Test_TPP3", self.auroc(torch.tensor([item[0] for item in tpp_3]), torch.tensor([item[1] for item in tpp_3]).to(torch.long)), prog_bar=True)
         self.log("AP_Test_TPP3", self.avg_precision(torch.tensor([item[0] for item in tpp_3]), torch.tensor([item[1] for item in tpp_3]).to(torch.long)), prog_bar=True)  
+        
+
+        test_predictions = torch.stack(self.test_predictions).squeeze(1).cpu().numpy()  
+        test_labels = torch.stack(self.test_labels).squeeze(1).cpu().numpy()            
+        test_tasks = np.array(self.test_tasks)
+        test_epitopes = np.array(self.epitopes).squeeze(1)
+        test_tra_cdr3s = np.array(self.tra_cdr3s).squeeze(1)
+        test_trb_cdr3s = np.array(self.trb_cdr3s).squeeze(1)
+
+        print(f"test_predictions.shape: {test_predictions.shape}")  
+        print(f"test_labels.shape: {test_labels.shape}")   
+        print(f"test_tasks.shape: {test_tasks.shape}") 
+        print(f"test_epitopes: {test_epitopes.shape}")           
+        print(f"test_tra_cdr3s: {test_tra_cdr3s.shape}")
+        print(f"test_trb_cdr3s: {test_trb_cdr3s.shape}")                       
+
+        data = {
+            "test_epitopes": test_epitopes, 
+            "test_tra_cdr3s": test_tra_cdr3s, 
+            "test_trb_cdr3s": test_trb_cdr3s,
+            "test_predictions": test_predictions,
+            "test_labels": test_labels,
+            "test_tasks": test_tasks, 
+        }
+
+        df = pd.DataFrame(data)
+        df.to_csv("./test_paired_df.tsv", sep="\t")
+
 
         self.test_predictions.clear()
         self.test_labels.clear()

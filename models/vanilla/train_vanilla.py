@@ -52,14 +52,18 @@ class PadCollate:
     def pad_collate(self, batch):
         epitope_embeddings, tra_cdr3_embeddings, trb_cdr3_embeddings = [], [], []
         v_alpha, j_alpha, v_beta, j_beta = [], [], [], []
+        epitope_sequence, tra_cdr3_sequence, trb_cdr3_sequence = [], [], []
         mhc = []
         task = []
         labels = []
 
         for item in batch:
             epitope_embeddings.append(item["epitope_embedding"])
+            epitope_sequence.append(item["epitope_sequence"])
             tra_cdr3_embeddings.append(item["tra_cdr3_embedding"])
+            tra_cdr3_sequence.append(item["tra_cdr3_sequence"])
             trb_cdr3_embeddings.append(item["trb_cdr3_embedding"])
+            trb_cdr3_sequence.append(item["trb_cdr3_sequence"])
             v_alpha.append(item["v_alpha"])
             j_alpha.append(item["j_alpha"])
             v_beta.append(item["v_beta"])
@@ -84,8 +88,11 @@ class PadCollate:
 
         return {
             "epitope_embedding": epitope_embeddings,
+            "epitope_sequence": epitope_sequence,
             "tra_cdr3_embedding": tra_cdr3_embeddings,
+            "tra_cdr3_sequence": tra_cdr3_sequence,
             "trb_cdr3_embedding": trb_cdr3_embeddings,
+            "trb_cdr3_sequence": trb_cdr3_sequence,
             "v_alpha": v_alpha,
             "j_alpha": j_alpha,
             "v_beta": v_beta,
@@ -197,15 +204,15 @@ def main():
     # ---------------------------------------------------------------------------------
     # model 
     # ---------------------------------------------------------------------------------
-    hyperparameters = set_hyperparameters(config)
-    '''
+    # hyperparameters = set_hyperparameters(config)
+    
     hyperparameters = {}
     hyperparameters["optimizer"] = "adam"
     hyperparameters["learning_rate"] = 5e-3
     hyperparameters["weight_decay"] = 0.075
     hyperparameters["dropout_attention"] = 0.3
     hyperparameters["dropout_linear"] = 0.45
-    '''
+    
     model = VanillaModel(EMBEDDING_SIZE, SEQ_MAX_LENGTH, DEVICE, traV_embed_len, traJ_embed_len, trbV_embed_len, trbJ_embed_len, mhc_embed_len, hyperparameters)
     # ---------------------------------------------------------------------------------
     # training

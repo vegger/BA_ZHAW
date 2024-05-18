@@ -51,8 +51,11 @@ class PairedVanilla(Dataset):
         row = self.data_frame.iloc[index]  
 
         epitope_embedding = torch.tensor(row["Epitope Embedding"], dtype=torch.float32)
+        epitope_sequence = row["Epitope"]
         tra_cdr3_embedding = torch.tensor(row["TRA_CDR3 Embedding"], dtype=torch.float32)
+        tra_cdr3_sequence = row["TRA_CDR3"]
         trb_cdr3_embedding = torch.tensor(row["TRB_CDR3 Embedding"], dtype=torch.float32)
+        trb_cdr3_sequence = row["TRB_CDR3"]
         v_alpha = row["TRAV Index"]
         j_alpha = row["TRAJ Index"]
         v_beta = row["TRBV Index"]
@@ -64,8 +67,11 @@ class PairedVanilla(Dataset):
 
         batch = {
             "epitope_embedding": epitope_embedding,
+            "epitope_sequence": epitope_sequence,
             "tra_cdr3_embedding": tra_cdr3_embedding,
+            "tra_cdr3_sequence": tra_cdr3_sequence,
             "trb_cdr3_embedding": trb_cdr3_embedding,
+            "trb_cdr3_sequence": trb_cdr3_sequence,
             "v_alpha": v_alpha,
             "j_alpha": j_alpha,
             "v_beta": v_beta,
