@@ -181,7 +181,7 @@ def main():
     checkpoint = torch.load(checkpoint_path)
     print(checkpoint.keys())
     model.load_state_dict(checkpoint["state_dict"])
-    # ATTENTION: if used: change in dataloader: batch_size = 1!
+    
     # trainer.test(model, dataloaders=test_dataloader) 
 
     model.to(DEVICE)
