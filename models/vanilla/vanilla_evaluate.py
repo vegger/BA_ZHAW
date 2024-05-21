@@ -160,7 +160,7 @@ def main():
     test_dataloader = DataLoader(
         # unseen_test_dataset,
         test_dataset,
-        batch_size=5,
+        batch_size=1,
         sampler=test_sampler,
         num_workers=NUM_WORKERS,
         collate_fn=pad_collate,
@@ -181,12 +181,14 @@ def main():
     checkpoint = torch.load(checkpoint_path)
     print(checkpoint.keys())
     model.load_state_dict(checkpoint["state_dict"])
-    # ATTENTION: if used: change in dataloader: batch_size = 0!
+    # ATTENTION: if used: change in dataloader: batch_size = 1!
     # trainer.test(model, dataloaders=test_dataloader) 
 
     model.to(DEVICE)
+    model.eval()
 
-    lig = LayerIntegratedGradients(model, model.traV_embed)
+    # TODO: here instead of "only" check influence of TRA_V => pass a list
+    lig = LayerIntegratedGradients(model, [model.traV_embed])
     
     # ig = IntegratedGradients(forward_with_softmax)
     for batch in test_dataloader:
@@ -212,6 +214,7 @@ def main():
             return_convergence_delta=True
             )
 
+        # TODO: if a list is passed to the ig => list is returned => handle it correspondingly
         attributions_ig = attributions_ig.cpu().numpy()
         
         print(f"attributions_ig: \n{attributions_ig}")
