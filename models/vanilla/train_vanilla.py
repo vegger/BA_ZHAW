@@ -84,6 +84,12 @@ class PadCollate:
         tra_cdr3_embeddings = pad_embeddings(tra_cdr3_embeddings)
         trb_cdr3_embeddings = pad_embeddings(trb_cdr3_embeddings)
 
+        v_alpha = torch.tensor(v_alpha, dtype=torch.int32)
+        j_alpha = torch.tensor(j_alpha, dtype=torch.int32)
+        v_beta = torch.tensor(v_beta, dtype=torch.int32)
+        j_beta = torch.tensor(j_beta, dtype=torch.int32)
+        mhc = torch.tensor(mhc, dtype=torch.int32)
+
         labels = torch.stack(labels)
 
         return {
@@ -123,7 +129,7 @@ def main():
     # W&B Setup
     # -----------------------------------------------------------------------------
 
-    experiment_name = f"Experiment - {MODEL_NAME}"
+    experiment_name = f"DUMMY Experiment - {MODEL_NAME}"
     load_dotenv()
     PROJECT_NAME = os.getenv("MAIN_PROJECT_NAME")
     print(f"PROJECT_NAME: {PROJECT_NAME}")

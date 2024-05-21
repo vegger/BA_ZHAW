@@ -171,12 +171,20 @@ class VanillaModel(pl.LightningModule):
         # print(f"tra_epitope.shape: {tra_epitope.shape}")
         # print(f"trb_epitope.shape: {trb_epitope.shape}")
 
-        tra_v_embed = self.traV_embed(torch.tensor(v_alpha).to(self.device_)).unsqueeze(0).permute(1, 0, 2)
-        trb_v_embed = self.trbV_embed(torch.tensor(v_beta).to(self.device_)).unsqueeze(0).permute(1, 0, 2)
-        trb_j_embed = self.trbJ_embed(torch.tensor(j_beta).to(self.device_)).unsqueeze(0).permute(1, 0, 2)
-        tra_j_embed = self.traJ_embed(torch.tensor(j_alpha).to(self.device_)).unsqueeze(0).permute(1, 0, 2)
-        mhc_embed = self.mhc_embed(torch.tensor(mhc).to(self.device_)).unsqueeze(0).permute(1, 0, 2)
+        '''
+        print(f"torch.tensor(v_alpha).to(self.device_): {torch.tensor(v_alpha).to(self.device_)}")
+        print(f"torch.tensor(v_alpha).dtype: {torch.tensor(v_alpha).dtype}")
+        print(f"torch.tensor(v_alpha)[0].dtype: {torch.tensor(v_alpha).to(torch.long).dtype}")
+        print(f"torch.tensor(v_alpha).to(torch.long).to(self.device_): {torch.tensor(v_alpha).to(torch.long).to(self.device_).device}")
+        '''
         
+        tra_v_embed = self.traV_embed(v_alpha.to(self.device_)).unsqueeze(0).permute(1, 0, 2)
+        trb_v_embed = self.trbV_embed(v_beta.to(self.device_)).unsqueeze(0).permute(1, 0, 2)
+        trb_j_embed = self.trbJ_embed(j_beta.to(self.device_)).unsqueeze(0).permute(1, 0, 2)
+        tra_j_embed = self.traJ_embed(j_alpha.to(self.device_)).unsqueeze(0).permute(1, 0, 2)
+        mhc_embed = self.mhc_embed(mhc).to(self.device_).unsqueeze(0).permute(1, 0, 2)
+
+
         '''
         print(f"tra_v_embed: {tra_v_embed.shape}")
         print(f"tra_v_embed.requires_grad: {tra_v_embed.requires_grad}")
@@ -269,6 +277,7 @@ class VanillaModel(pl.LightningModule):
         tpp_1 = []
         tpp_2 = []
         tpp_3 = []
+        tpp_4 = []
 
         for i, task in enumerate(test_tasks):
             if task == "TPP1": 
@@ -282,7 +291,7 @@ class VanillaModel(pl.LightningModule):
                 tpp_3.append((test_predictions[i], test_labels[i]))
             elif task == "TPP4":
                 # print("in TPP4")
-                continue
+                tpp_4.append((test_predictions[i], test_labels[i]))
             else: 
                 print("ERROR IN TASK")
  
@@ -298,6 +307,10 @@ class VanillaModel(pl.LightningModule):
         self.log("ROCAUC_Test_TPP3", self.auroc(torch.tensor([item[0] for item in tpp_3]), torch.tensor([item[1] for item in tpp_3]).to(torch.long)), prog_bar=True)
         self.log("AP_Test_TPP3", self.avg_precision(torch.tensor([item[0] for item in tpp_3]), torch.tensor([item[1] for item in tpp_3]).to(torch.long)), prog_bar=True)  
         
+        print(f"len(tpp_4): {tpp_4}")
+        self.log("ROCAUC_Test_TPP4", self.auroc(torch.tensor([item[0] for item in tpp_4]), torch.tensor([item[1] for item in tpp_4]).to(torch.long)), prog_bar=True)
+        self.log("AP_Test_TPP4", self.avg_precision(torch.tensor([item[0] for item in tpp_4]), torch.tensor([item[1] for item in tpp_4]).to(torch.long)), prog_bar=True)  
+        
 
         test_predictions = torch.stack(self.test_predictions).squeeze(1).cpu().numpy()  
         test_labels = torch.stack(self.test_labels).squeeze(1).cpu().numpy()            
@@ -306,12 +319,14 @@ class VanillaModel(pl.LightningModule):
         test_tra_cdr3s = np.array(self.tra_cdr3s).squeeze(1)
         test_trb_cdr3s = np.array(self.trb_cdr3s).squeeze(1)
 
+        '''
         print(f"test_predictions.shape: {test_predictions.shape}")  
         print(f"test_labels.shape: {test_labels.shape}")   
         print(f"test_tasks.shape: {test_tasks.shape}") 
         print(f"test_epitopes: {test_epitopes.shape}")           
         print(f"test_tra_cdr3s: {test_tra_cdr3s.shape}")
         print(f"test_trb_cdr3s: {test_trb_cdr3s.shape}")                       
+        '''
 
         data = {
             "test_epitopes": test_epitopes, 
@@ -323,8 +338,7 @@ class VanillaModel(pl.LightningModule):
         }
 
         df = pd.DataFrame(data)
-        df.to_csv("./test_paired_df.tsv", sep="\t")
-
+        # df.to_csv("./test_paired_df.tsv", sep="\t")
 
         self.test_predictions.clear()
         self.test_labels.clear()
