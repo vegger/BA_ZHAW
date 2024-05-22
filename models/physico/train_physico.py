@@ -19,7 +19,7 @@ torch.manual_seed(42)
 # ---------------------------------------------------------------------------------
 MODEL_NAME = "PhysicoModel"
 EMBEDDING_SIZE = 1024
-BATCH_SIZE = 512
+BATCH_SIZE = 256
 EPOCHS = 275
 # IMPORTANT: keep NUM_WORKERS = 0!
 NUM_WORKERS = 0
@@ -83,6 +83,12 @@ class PadCollate:
         tra_cdr3_embeddings = pad_embeddings(tra_cdr3_embeddings)
         trb_cdr3_embeddings = pad_embeddings(trb_cdr3_embeddings)
 
+        v_alpha = torch.tensor(v_alpha, dtype=torch.int32)
+        j_alpha = torch.tensor(j_alpha, dtype=torch.int32)
+        v_beta = torch.tensor(v_beta, dtype=torch.int32)
+        j_beta = torch.tensor(j_beta, dtype=torch.int32)
+        mhc = torch.tensor(mhc, dtype=torch.int32)
+
         epitope_physico = torch.stack(epitope_physico)
         tra_physico = torch.stack(tra_physico)
         trb_physico = torch.stack(trb_physico)
@@ -125,8 +131,8 @@ def main():
     # -----------------------------------------------------------------------------
     # W&B Setup
     # -----------------------------------------------------------------------------
-
-    experiment_name = f"Experiment3 (smaller lr) - {MODEL_NAME}"
+    print(f"NO positional encoding & NO He initialization")
+    experiment_name = f"Experiment (BugFixed) - {MODEL_NAME}"
     load_dotenv()
     PROJECT_NAME = os.getenv("MAIN_PROJECT_NAME")
     print(f"PROJECT_NAME: {PROJECT_NAME}")
@@ -138,6 +144,7 @@ def main():
     # -----------------------------------------------------------------------------
     # Download corresponding artifact (= dataset) from W&B
     precision = "gene" # or allele
+    # precision = "allele"
     dataset_name = f"paired_{precision}"
     artifact = run.use_artifact(f"{dataset_name}:latest")
     data_dir = artifact.download(f"./WnB_Experiments_Datasets/paired_{precision}")
@@ -163,17 +170,17 @@ def main():
     trbJ_embed_len = get_embed_len(df_full, "TRBJ")
     mhc_embed_len = get_embed_len(df_full, "MHC")
 
-    physico_base_dir = "."
+    physico_base_dir = "/teamspace/studios/this_studio/BA/physico"
 
-    train_physico_epi = f"{physico_base_dir}/scaled_train_epitope_physico.npz"
-    train_physico_tra = f"{physico_base_dir}/scaled_train_TRA_physico.npz"
-    train_physico_trb = f"{physico_base_dir}/scaled_train_TRB_physico.npz"
-    test_physico_epi = f"{physico_base_dir}/scaled_test_epitope_physico.npz"
-    test_physico_tra = f"{physico_base_dir}/scaled_test_TRA_physico.npz"
-    test_physico_trb = f"{physico_base_dir}/scaled_test_TRB_physico.npz"
-    val_physico_epi = f"{physico_base_dir}/scaled_validation_epitope_physico.npz"
-    val_physico_tra = f"{physico_base_dir}/scaled_validation_TRA_physico.npz"
-    val_physico_trb = f"{physico_base_dir}/scaled_validation_TRB_physico.npz"
+    train_physico_epi = f"{physico_base_dir}/scaled_train_paired_epitope_{precision}_physico.npz"
+    train_physico_tra = f"{physico_base_dir}/scaled_train_paired_TRA_{precision}_physico.npz"
+    train_physico_trb = f"{physico_base_dir}/scaled_train_paired_TRB_{precision}_physico.npz"
+    test_physico_epi = f"{physico_base_dir}/scaled_test_paired_epitope_{precision}_physico.npz"
+    test_physico_tra = f"{physico_base_dir}/scaled_test_paired_TRA_{precision}_physico.npz"
+    test_physico_trb = f"{physico_base_dir}/scaled_test_paired_TRB_{precision}_physico.npz"
+    val_physico_epi = f"{physico_base_dir}/scaled_validation_paired_epitope_{precision}_physico.npz"
+    val_physico_tra = f"{physico_base_dir}/scaled_validation_paired_TRA_{precision}_physico.npz"
+    val_physico_trb = f"{physico_base_dir}/scaled_validation_paired_TRB_{precision}_physico.npz"
 
     embed_base_dir = "/teamspace/studios/this_studio/BA/paired"
 
@@ -218,15 +225,15 @@ def main():
     # ---------------------------------------------------------------------------------
     # model 
     # ---------------------------------------------------------------------------------
-    hyperparameters = set_hyperparameters(config)
-    '''
+    # hyperparameters = set_hyperparameters(config)
+    
     hyperparameters = {}
     hyperparameters["optimizer"] = "sgd"
-    hyperparameters["learning_rate"] = 0.0001
-    hyperparameters["weight_decay"] = 0.075
-    hyperparameters["dropout_attention"] = 0.3
-    hyperparameters["dropout_linear"] = 0.50
-    '''
+    hyperparameters["learning_rate"] = 0.007810281400752681
+    hyperparameters["weight_decay"] = 0.009146917668628398
+    hyperparameters["dropout_attention"] = 0.14051600390758243
+    hyperparameters["dropout_linear"] = 0.4620213627675807
+    
     model = PhysicoModel(EMBEDDING_SIZE, SEQ_MAX_LENGTH, DEVICE, traV_embed_len, traJ_embed_len, trbV_embed_len, trbJ_embed_len, mhc_embed_len, hyperparameters)
     # ---------------------------------------------------------------------------------
     # training
@@ -256,7 +263,7 @@ def main():
     )
 
     lr_monitor = LearningRateMonitor(logging_interval='epoch')
-    swa = StochasticWeightAveraging(swa_lrs=hyperparameters["learning_rate"]*0.1, swa_epoch_start=45)
+    swa = StochasticWeightAveraging(swa_lrs=hyperparameters["learning_rate"]*0.1, swa_epoch_start=30)
     
     # Training
     trainer = pl.Trainer(

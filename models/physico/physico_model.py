@@ -2,8 +2,11 @@ import pytorch_lightning as pl
 import torch
 import pandas as pd
 from torch import nn
+import torch.nn as nn
+import torch.nn.init as init
 from torch.nn import functional as F
 from torchmetrics.classification import BinaryAUROC, BinaryAveragePrecision
+import math
 
 
 class TransformerBlock(nn.Module):
@@ -126,6 +129,36 @@ class MLP_Physico(nn.Module):
         return x
 
 
+'''
+class PositionalEncoding(nn.Module):
+    def __init__(self, d_model, max_len=5000):
+        super(PositionalEncoding, self).__init__()
+        self.dropout = nn.Dropout(p=0.1)
+        
+        pe = torch.zeros(max_len, d_model)
+        position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
+        pe[:, 0::2] = torch.sin(position * div_term)
+        pe[:, 1::2] = torch.cos(position * div_term)
+        pe = pe.unsqueeze(0).transpose(0, 1)
+        self.register_buffer('pe', pe)
+
+    def forward(self, x):
+        x = x + self.pe[:x.size(0), :]
+        return self.dropout(x)
+'''
+
+'''
+def he_init(layer):
+    if isinstance(layer, nn.Linear) or isinstance(layer, nn.Conv2d):
+        init.kaiming_normal_(layer.weight, nonlinearity='relu')  # He normal initialization
+        if layer.bias is not None:
+            init.constant_(layer.bias, 0)
+    elif isinstance(layer, nn.Embedding):
+        init.normal_(layer.weight, mean=0, std=0.1)  # Initialize embeddings
+'''
+
+
 class PhysicoModel(pl.LightningModule):
     def __init__(self, embed_dim, max_seq_length, device_, traV_embed_len, traJ_embed_len, trbV_embed_len, trbJ_embed_len, mhc_embed_len, hyperparameters):
         super(PhysicoModel, self).__init__()
@@ -145,6 +178,8 @@ class PhysicoModel(pl.LightningModule):
         self.test_labels = []
         self.test_tasks = []
 
+        # self.positional_encoding = PositionalEncoding(embed_dim, max_len=max_seq_length+1)
+
         self.allele_info_dim = 1024
 
         self.traV_embed = nn.Embedding(traV_embed_len, self.allele_info_dim)
@@ -157,7 +192,10 @@ class PhysicoModel(pl.LightningModule):
         self.physico_in_dim = 101
         self.physico_hidden_dim = 64
         self.physico_output_dim = embed_dim
-        self.mlp_physico = MLP_Physico(self.physico_in_dim, self.physico_hidden_dim, self.physico_output_dim, self.hyperparameters["dropout_linear"])
+        self.mlp_physico_epitope = MLP_Physico(self.physico_in_dim, self.physico_hidden_dim, self.physico_output_dim, self.hyperparameters["dropout_linear"])
+        self.mlp_physico_tra = MLP_Physico(self.physico_in_dim, self.physico_hidden_dim, self.physico_output_dim, self.hyperparameters["dropout_linear"])
+        self.mlp_physico_trb = MLP_Physico(self.physico_in_dim, self.physico_hidden_dim, self.physico_output_dim, self.hyperparameters["dropout_linear"])
+
 
         # Define TransformerBlock for Epitope/TRA/TRB with their physico properties
         # Note: embed_dim must be dividable by num_heads!
@@ -183,7 +221,8 @@ class PhysicoModel(pl.LightningModule):
         self.classifier_in = 2*(2*(max_seq_length+1)+3)*embed_dim
         print(f"self.classifier_in: {self.classifier_in}")
         self.classifier = Classifier(self.classifier_in, self.classifier_hidden, self.hyperparameters["dropout_linear"])
-    
+
+        # self.apply(he_init)
 
     def forward(self, epitope, tra_cdr3, trb_cdr3, epitope_physico, tra_physico, trb_physico, v_alpha, j_alpha, v_beta, j_beta, mhc):
         '''
@@ -198,13 +237,14 @@ class PhysicoModel(pl.LightningModule):
         print(f"len(v_beta): {len(v_beta)}")
         print(f"len(j_beta): {len(j_beta)}")
         print(f"len(mhc): {len(mhc)}")
-        print(f"epitope_physico[0]: {epitope_physico[0]}")
-        print(f"epitope[0]: {epitope[0]}")
         '''
+        # print(f"epitope_physico[0]: {epitope_physico[0]}")
+        # print(f"epitope[0]: {epitope[0]}")
+        
 
-        epitope_physico_embedd = self.mlp_physico(epitope_physico).unsqueeze(1)
-        tra_physico_embedd = self.mlp_physico(tra_physico).unsqueeze(1)
-        trb_physico_embedd = self.mlp_physico(trb_physico).unsqueeze(1)
+        epitope_physico_embedd = self.mlp_physico_epitope(epitope_physico).unsqueeze(1)
+        tra_physico_embedd = self.mlp_physico_tra(tra_physico).unsqueeze(1)
+        trb_physico_embedd = self.mlp_physico_trb(trb_physico).unsqueeze(1)
 
         '''
         print(f"epitope_physico_embedd.shape: {epitope_physico_embedd.shape}")
@@ -215,19 +255,27 @@ class PhysicoModel(pl.LightningModule):
         epitope_with_physico = torch.cat([epitope, epitope_physico_embedd], dim=1)
         tra_with_physico = torch.cat([tra_cdr3, tra_physico_embedd], dim=1)
         trb_with_physico = torch.cat([trb_cdr3, trb_physico_embedd], dim=1)
+        
 
+        '''
+        # Positional Encoding Approach
+        epitope_with_physico_attention = self.multihead_attn_physico(self.positional_encoding(epitope_with_physico.permute(1, 0, 2)))
+        tra_with_physico_attention = self.multihead_attn_physico(self.positional_encoding(tra_with_physico.permute(1, 0, 2)))
+        trb_with_physico_attention = self.multihead_attn_physico(self.positional_encoding(trb_with_physico.permute(1, 0, 2)))
+        '''
+        
         '''
         print(f"epitope_with_physico.shape: {epitope_with_physico.shape}")
         print(f"tra_with_physico.shape: {tra_with_physico.shape}")
         print(f"trb_with_physico.shape: {trb_with_physico.shape}")
         '''
-
-        # x of shape (max_seq_length, batch_size, embed_dim): Input sequences.
-        # print(f"permute epitope shape: {epitope_with_physico.permute(1, 0, 2).shape}")
+        
+        # x of shape (max_seq_length, batch_size, embed_dim): Input sequences.
+        # print(f"permute epitope shape: {epitope_with_physico.permute(1, 0, 2).shape}")
         epitope_with_physico_attention = self.multihead_attn_physico(epitope_with_physico.permute(1, 0, 2))
         tra_with_physico_attention = self.multihead_attn_physico(tra_with_physico.permute(1, 0, 2))
         trb_with_physico_attention = self.multihead_attn_physico(trb_with_physico.permute(1, 0, 2))
-
+        
         '''
         print(f"epitope_with_physico_attention.shape: {epitope_with_physico_attention.shape}")
         print(f"tra_with_physico_attention.shape: {tra_with_physico_attention.shape}")
@@ -236,17 +284,27 @@ class PhysicoModel(pl.LightningModule):
 
         tra_epitope = torch.cat([tra_with_physico_attention, epitope_with_physico_attention], dim=0)
         trb_epitope = torch.cat([trb_with_physico_attention, epitope_with_physico_attention], dim=0)
-        # print(f"tra_epitope.shape: {tra_epitope.shape}")
+        # print(f"tra_epitope.shape: {tra_epitope.shape}")
         # print(f"trb_epitope.shape: {trb_epitope.shape}")
 
         # print(f"torch.tensor(v_alpha): {torch.tensor(v_alpha)}")
+        
         tra_v_embed = self.traV_embed(torch.tensor(v_alpha).to(self.device_)).unsqueeze(0)
         trb_v_embed = self.trbV_embed(torch.tensor(v_beta).to(self.device_)).unsqueeze(0)
         trb_j_embed = self.trbJ_embed(torch.tensor(j_beta).to(self.device_)).unsqueeze(0)
         tra_j_embed = self.traJ_embed(torch.tensor(j_alpha).to(self.device_)).unsqueeze(0)
         mhc_embed = self.mhc_embed(torch.tensor(mhc).to(self.device_)).unsqueeze(0)
+        
 
-        '''      
+        '''
+        tra_v_embed = self.traV_embed(v_alpha.to(self.device_)).unsqueeze(0).permute(1, 0, 2)
+        trb_v_embed = self.trbV_embed(v_beta.to(self.device_)).unsqueeze(0).permute(1, 0, 2)
+        trb_j_embed = self.trbJ_embed(j_beta.to(self.device_)).unsqueeze(0).permute(1, 0, 2)
+        tra_j_embed = self.traJ_embed(j_alpha.to(self.device_)).unsqueeze(0).permute(1, 0, 2)
+        mhc_embed = self.mhc_embed(mhc).to(self.device_).unsqueeze(0).permute(1, 0, 2)
+        '''
+
+        '''
         print(f"tra_v_embed: {tra_v_embed.shape}")
         print(f"tra_j_embed: {tra_j_embed.shape}")
         print(f"trb_v_embed: {trb_v_embed.shape}")
@@ -259,15 +317,16 @@ class PhysicoModel(pl.LightningModule):
         # print(f"tra_epitope_vj_mhc.shape: {tra_epitope_vj_mhc.shape}")
         # print(f"trb_epitope_vj_mhc.shape: {trb_epitope_vj_mhc.shape}")
 
+        # x of shape (max_seq_length, batch_size, embed_dim): Input sequences.
         tra_epitope_vj_mhc_attention = self.multihead_attn_global(tra_epitope_vj_mhc)
         trb_epitope_vj_mhc_attention = self.multihead_attn_global(trb_epitope_vj_mhc) 
         # print(f"tra_epitope_vj_mhc_attention.shape: {tra_epitope_vj_mhc_attention.shape}") 
-        # print(f"trb_epitope_vj_mhc_attention.shape: {trb_epitope_vj_mhc_attention.shape}")       
+        # print(f"trb_epitope_vj_mhc_attention.shape: {trb_epitope_vj_mhc_attention.shape}")       
 
         concat_both_chains = torch.cat([tra_epitope_vj_mhc_attention, trb_epitope_vj_mhc_attention], dim=0)
-        # print(f"concat_both_chains.shape: {concat_both_chains.shape}")
+        # print(f"concat_both_chains.shape: {concat_both_chains.shape}")
         concat_both_chains_flatten = concat_both_chains.view(concat_both_chains.size(1), -1)
-        # print(f"concat_both_chains_flatten.shape: {concat_both_chains_flatten.shape}")
+        # print(f"concat_both_chains_flatten.shape: {concat_both_chains_flatten.shape}")
         
         logits = self.classifier(concat_both_chains_flatten)
         # print(f"logits: {logits}")
@@ -328,26 +387,34 @@ class PhysicoModel(pl.LightningModule):
 
     def on_test_epoch_end(self):
         test_predictions = torch.stack(self.test_predictions)
-        # print(f"self.test_preditions: {self.test_predictions}")
-        # print(f"test_predictions: {test_predictions}")
         test_labels = torch.stack(self.test_labels)
         # print(f"on_test_epoch_end, test_labels: {test_labels}")
         test_tasks = self.test_tasks
-    
+
+        print(f"len(self.test_predictions): {len(self.test_predictions)}")
+        print(f"len(self.test_labels): {len(self.test_labels)}")
+        print(f"len(self.test_tasks): {len(self.test_tasks)}")
+
         tpp_1 = []
         tpp_2 = []
         tpp_3 = []
+        tpp_4 = []
 
         for i, task in enumerate(test_tasks):
             if task == "TPP1": 
                 # print(f"task 1: {task}")
                 tpp_1.append((test_predictions[i], test_labels[i]))
-            if task == "TPP2": 
-                # print(f"task 2: {task}")
+            elif task == "TPP2": 
+                # print(f"task 2: {task}")
                 tpp_2.append((test_predictions[i], test_labels[i]))
-            if task == "TPP3": 
-                # print(f"task 3: {task}")
+            elif task == "TPP3": 
+                # print(f"task 3: {task}")
                 tpp_3.append((test_predictions[i], test_labels[i]))
+            elif task == "TPP4":
+                # print("in TPP4")
+                tpp_4.append((test_predictions[i], test_labels[i]))
+            else: 
+                print("ERROR IN TASK")
  
         self.log("ROCAUC_Test_global", self.auroc(test_predictions, test_labels), prog_bar=True)
         self.log("AP_Test_global", self.avg_precision(test_predictions, test_labels.to(torch.long)), prog_bar=True)
@@ -360,6 +427,39 @@ class PhysicoModel(pl.LightningModule):
         
         self.log("ROCAUC_Test_TPP3", self.auroc(torch.tensor([item[0] for item in tpp_3]), torch.tensor([item[1] for item in tpp_3]).to(torch.long)), prog_bar=True)
         self.log("AP_Test_TPP3", self.avg_precision(torch.tensor([item[0] for item in tpp_3]), torch.tensor([item[1] for item in tpp_3]).to(torch.long)), prog_bar=True)  
+        
+        print(f"len(tpp_4): {tpp_4}")
+        self.log("ROCAUC_Test_TPP4", self.auroc(torch.tensor([item[0] for item in tpp_4]), torch.tensor([item[1] for item in tpp_4]).to(torch.long)), prog_bar=True)
+        self.log("AP_Test_TPP4", self.avg_precision(torch.tensor([item[0] for item in tpp_4]), torch.tensor([item[1] for item in tpp_4]).to(torch.long)), prog_bar=True)  
+        
+
+        test_predictions = torch.stack(self.test_predictions).squeeze(1).cpu().numpy()  
+        test_labels = torch.stack(self.test_labels).squeeze(1).cpu().numpy()            
+        test_tasks = np.array(self.test_tasks)
+        test_epitopes = np.array(self.epitopes).squeeze(1)
+        test_tra_cdr3s = np.array(self.tra_cdr3s).squeeze(1)
+        test_trb_cdr3s = np.array(self.trb_cdr3s).squeeze(1)
+
+        '''
+        print(f"test_predictions.shape: {test_predictions.shape}")  
+        print(f"test_labels.shape: {test_labels.shape}")   
+        print(f"test_tasks.shape: {test_tasks.shape}") 
+        print(f"test_epitopes: {test_epitopes.shape}")           
+        print(f"test_tra_cdr3s: {test_tra_cdr3s.shape}")
+        print(f"test_trb_cdr3s: {test_trb_cdr3s.shape}")                       
+        '''
+
+        data = {
+            "test_epitopes": test_epitopes, 
+            "test_tra_cdr3s": test_tra_cdr3s, 
+            "test_trb_cdr3s": test_trb_cdr3s,
+            "test_predictions": test_predictions,
+            "test_labels": test_labels,
+            "test_tasks": test_tasks, 
+        }
+
+        df = pd.DataFrame(data)
+        # df.to_csv("./test_paired_df.tsv", sep="\t")
 
         self.test_predictions.clear()
         self.test_labels.clear()
