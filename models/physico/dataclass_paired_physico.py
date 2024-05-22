@@ -63,8 +63,11 @@ class PairedPhysico(Dataset):
         row = self.data_frame.iloc[index]  
 
         epitope_embedding = torch.tensor(row["Epitope Embedding"], dtype=torch.float32)
+        epitope_sequence = row["Epitope"]
         tra_cdr3_embedding = torch.tensor(row["TRA_CDR3 Embedding"], dtype=torch.float32)
+        tra_cdr3_sequence = row["TRA_CDR3"]
         trb_cdr3_embedding = torch.tensor(row["TRB_CDR3 Embedding"], dtype=torch.float32)
+        trb_cdr3_sequence = row["TRB_CDR3"]
         epitope_physico = row["Epitope Physico"]
         tra_physico = row["TRA_CDR3 Physico"]
         trb_physico = row["TRB_CDR3 Physico"]
@@ -79,8 +82,11 @@ class PairedPhysico(Dataset):
 
         batch = {
             "epitope_embedding": epitope_embedding,
+            "epitope_sequence": epitope_sequence,
             "tra_cdr3_embedding": tra_cdr3_embedding,
+            "tra_cdr3_sequence": tra_cdr3_sequence,
             "trb_cdr3_embedding": trb_cdr3_embedding,
+            "trb_cdr3_sequence": trb_cdr3_sequence,
             "epitope_physico": epitope_physico, 
             "tra_physico": tra_physico, 
             "trb_physico": trb_physico,

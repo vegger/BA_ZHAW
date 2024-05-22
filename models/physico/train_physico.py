@@ -225,15 +225,15 @@ def main():
     # ---------------------------------------------------------------------------------
     # model 
     # ---------------------------------------------------------------------------------
-    # hyperparameters = set_hyperparameters(config)
-    
+    hyperparameters = set_hyperparameters(config)
+    '''
     hyperparameters = {}
     hyperparameters["optimizer"] = "sgd"
     hyperparameters["learning_rate"] = 0.007810281400752681
     hyperparameters["weight_decay"] = 0.009146917668628398
     hyperparameters["dropout_attention"] = 0.14051600390758243
     hyperparameters["dropout_linear"] = 0.4620213627675807
-    
+    '''
     model = PhysicoModel(EMBEDDING_SIZE, SEQ_MAX_LENGTH, DEVICE, traV_embed_len, traJ_embed_len, trbV_embed_len, trbJ_embed_len, mhc_embed_len, hyperparameters)
     # ---------------------------------------------------------------------------------
     # training
