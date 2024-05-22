@@ -288,21 +288,21 @@ class PhysicoModel(pl.LightningModule):
         # print(f"trb_epitope.shape: {trb_epitope.shape}")
 
         # print(f"torch.tensor(v_alpha): {torch.tensor(v_alpha)}")
-        
+        '''
         tra_v_embed = self.traV_embed(torch.tensor(v_alpha).to(self.device_)).unsqueeze(0)
         trb_v_embed = self.trbV_embed(torch.tensor(v_beta).to(self.device_)).unsqueeze(0)
         trb_j_embed = self.trbJ_embed(torch.tensor(j_beta).to(self.device_)).unsqueeze(0)
         tra_j_embed = self.traJ_embed(torch.tensor(j_alpha).to(self.device_)).unsqueeze(0)
         mhc_embed = self.mhc_embed(torch.tensor(mhc).to(self.device_)).unsqueeze(0)
-        
-
         '''
+
+        
         tra_v_embed = self.traV_embed(v_alpha.to(self.device_)).unsqueeze(0).permute(1, 0, 2)
         trb_v_embed = self.trbV_embed(v_beta.to(self.device_)).unsqueeze(0).permute(1, 0, 2)
         trb_j_embed = self.trbJ_embed(j_beta.to(self.device_)).unsqueeze(0).permute(1, 0, 2)
         tra_j_embed = self.traJ_embed(j_alpha.to(self.device_)).unsqueeze(0).permute(1, 0, 2)
         mhc_embed = self.mhc_embed(mhc).to(self.device_).unsqueeze(0).permute(1, 0, 2)
-        '''
+        
 
         '''
         print(f"tra_v_embed: {tra_v_embed.shape}")
