@@ -228,7 +228,7 @@ class PhysicoModel(pl.LightningModule):
         # self.apply(he_init)
 
     def forward(self, epitope, tra_cdr3, trb_cdr3, epitope_physico, tra_physico, trb_physico, v_alpha, j_alpha, v_beta, j_beta, mhc):
-        
+        '''
         print(f"epitope.shape: {epitope.shape}")
         print(f"tra_cdr3.shape: {tra_cdr3.shape}")
         print(f"trb_cdr3.shape: {trb_cdr3.shape}")
@@ -240,17 +240,17 @@ class PhysicoModel(pl.LightningModule):
         print(f"len(v_beta): {len(v_beta)}")
         print(f"len(j_beta): {len(j_beta)}")
         print(f"len(mhc): {len(mhc)}")
-        
+        '''
 
         epitope_physico_embedd = self.mlp_physico_epitope(epitope_physico).unsqueeze(1)
         tra_physico_embedd = self.mlp_physico_tra(tra_physico).unsqueeze(1)
         trb_physico_embedd = self.mlp_physico_trb(trb_physico).unsqueeze(1)
 
-        
+        '''
         print(f"epitope_physico_embedd.shape: {epitope_physico_embedd.shape}")
         print(f"tra_physico_embedd.shape: {tra_physico_embedd.shape}")
         print(f"trb_physico_embedd.shape: {trb_physico_embedd.shape}")
-        
+        '''
         
         epitope_with_physico = torch.cat([epitope, epitope_physico_embedd], dim=1)
         tra_with_physico = torch.cat([tra_cdr3, tra_physico_embedd], dim=1)
@@ -264,59 +264,59 @@ class PhysicoModel(pl.LightningModule):
         trb_with_physico_attention = self.multihead_attn_physico(self.positional_encoding(trb_with_physico.permute(1, 0, 2)))
         '''
         
-        
+        '''
         print(f"epitope_with_physico.shape: {epitope_with_physico.shape}")
         print(f"tra_with_physico.shape: {tra_with_physico.shape}")
         print(f"trb_with_physico.shape: {trb_with_physico.shape}")
-        
+        '''
         
         # x of shape (max_seq_length, batch_size, embed_dim): Input sequences.
-        print(f"permute epitope shape: {epitope_with_physico.permute(1, 0, 2).shape}")
+        # print(f"permute epitope shape: {epitope_with_physico.permute(1, 0, 2).shape}")
         epitope_with_physico_attention = self.multihead_attn_physico(epitope_with_physico.permute(1, 0, 2))
         tra_with_physico_attention = self.multihead_attn_physico(tra_with_physico.permute(1, 0, 2))
         trb_with_physico_attention = self.multihead_attn_physico(trb_with_physico.permute(1, 0, 2))
         
-        
+        '''
         print(f"epitope_with_physico_attention.shape: {epitope_with_physico_attention.shape}")
         print(f"tra_with_physico_attention.shape: {tra_with_physico_attention.shape}")
         print(f"trb_with_physico_attention.shape: {trb_with_physico_attention.shape}")
-        
+        '''
 
         tra_epitope = torch.cat([tra_with_physico_attention, epitope_with_physico_attention], dim=0)
         trb_epitope = torch.cat([trb_with_physico_attention, epitope_with_physico_attention], dim=0)
-        print(f"tra_epitope.shape: {tra_epitope.shape}")
-        print(f"trb_epitope.shape: {trb_epitope.shape}")
+        # print(f"tra_epitope.shape: {tra_epitope.shape}")
+        # print(f"trb_epitope.shape: {trb_epitope.shape}")
         
-        print(f"v_alpha.to(self.device_): {v_alpha.to(self.device_)}")
+        # print(f"v_alpha.to(self.device_): {v_alpha.to(self.device_)}")
         tra_v_embed = self.traV_embed(v_alpha.to(self.device_)).unsqueeze(0)
         trb_v_embed = self.trbV_embed(v_beta.to(self.device_)).unsqueeze(0)
         trb_j_embed = self.trbJ_embed(j_beta.to(self.device_)).unsqueeze(0)
         tra_j_embed = self.traJ_embed(j_alpha.to(self.device_)).unsqueeze(0)
         mhc_embed = self.mhc_embed(mhc).to(self.device_).unsqueeze(0)
         
-
+        '''
         print(f"tra_v_embed: {tra_v_embed.shape}")
         print(f"tra_j_embed: {tra_j_embed.shape}")
         print(f"trb_v_embed: {trb_v_embed.shape}")
         print(f"trb_j_embed: {trb_j_embed.shape}")
         print(f"mhc_embed: {mhc_embed.shape}")
-       
+        '''
 
         tra_epitope_vj_mhc = torch.cat([tra_epitope, tra_v_embed, tra_j_embed, mhc_embed])
         trb_epitope_vj_mhc = torch.cat([trb_epitope, trb_v_embed, trb_j_embed, mhc_embed])
-        print(f"tra_epitope_vj_mhc.shape: {tra_epitope_vj_mhc.shape}")
-        print(f"trb_epitope_vj_mhc.shape: {trb_epitope_vj_mhc.shape}")
+        # print(f"tra_epitope_vj_mhc.shape: {tra_epitope_vj_mhc.shape}")
+        # print(f"trb_epitope_vj_mhc.shape: {trb_epitope_vj_mhc.shape}")
 
         # x of shape (max_seq_length, batch_size, embed_dim): Input sequences.
         tra_epitope_vj_mhc_attention = self.multihead_attn_global(tra_epitope_vj_mhc)
         trb_epitope_vj_mhc_attention = self.multihead_attn_global(trb_epitope_vj_mhc) 
-        print(f"tra_epitope_vj_mhc_attention.shape: {tra_epitope_vj_mhc_attention.shape}") 
-        print(f"trb_epitope_vj_mhc_attention.shape: {trb_epitope_vj_mhc_attention.shape}")       
+        # print(f"tra_epitope_vj_mhc_attention.shape: {tra_epitope_vj_mhc_attention.shape}") 
+        # print(f"trb_epitope_vj_mhc_attention.shape: {trb_epitope_vj_mhc_attention.shape}")       
 
         concat_both_chains = torch.cat([tra_epitope_vj_mhc_attention, trb_epitope_vj_mhc_attention], dim=0)
-        print(f"concat_both_chains.shape: {concat_both_chains.shape}")
+        # print(f"concat_both_chains.shape: {concat_both_chains.shape}")
         concat_both_chains_flatten = concat_both_chains.view(concat_both_chains.size(1), -1)
-        print(f"concat_both_chains_flatten.shape: {concat_both_chains_flatten.shape}")
+        # print(f"concat_both_chains_flatten.shape: {concat_both_chains_flatten.shape}")
         
         logits = self.classifier(concat_both_chains_flatten)
         # print(f"logits: {logits}")
