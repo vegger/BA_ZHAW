@@ -65,24 +65,24 @@ def parallel_compute_properties(df, column_name):
 
 def main():
     # MOST RECENT
-    
-    df = pd.read_csv("/teamspace/studios/this_studio/BA_ZHAW/models/physico/WnB_Experiments_Datasets/paired_allele/allele/train.tsv", sep="\t")
+    dataset = "train"
+    precision = "allele"
+    df = pd.read_csv(f"/teamspace/studios/this_studio/BA_ZHAW/models/physico/WnB_Experiments_Datasets/paired_{precision}/{precision}/{dataset}.tsv", sep="\t")
     
     
     epitope_properties = parallel_compute_properties(df, "Epitope")
-    np.savez("./train_paired_epitope_allele_physico.npz", **epitope_properties)
+    np.savez(f"./{dataset}_paired_epitope_{precision}_physico.npz", **epitope_properties)
     
-
-    '''
+    gc.collect()
+    
     tra_properties = parallel_compute_properties(df, "TRA_CDR3")
-    np.savez("./train_paired_TRA_allele_physico.npz", **tra_properties)  
-    '''
-
-    '''
+    np.savez(f"./{dataset}_paired_TRA_{precision}_physico.npz", **tra_properties)  
+    
+    gc.collect()
+    
     trb_properties = parallel_compute_properties(df, "TRB_CDR3")
-    np.savez("./train_paired_TRB_allele_physico.npz", **trb_properties)    
-    '''
-
+    np.savez(f"./{dataset}_paired_TRB_{precision}_physico.npz", **trb_properties)    
+    
     gc.collect()
 
 if __name__ == "__main__":
