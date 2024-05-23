@@ -7,6 +7,7 @@ import torch.nn.init as init
 from torch.nn import functional as F
 from torchmetrics.classification import BinaryAUROC, BinaryAveragePrecision
 import math
+import numpy as np
 
 
 class TransformerBlock(nn.Module):
