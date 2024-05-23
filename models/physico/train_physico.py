@@ -19,8 +19,8 @@ torch.manual_seed(42)
 # ---------------------------------------------------------------------------------
 MODEL_NAME = "PhysicoModel"
 EMBEDDING_SIZE = 1024
-BATCH_SIZE = 256
-EPOCHS = 1
+BATCH_SIZE = 128
+EPOCHS = 250
 # IMPORTANT: keep NUM_WORKERS = 0!
 NUM_WORKERS = 0
 
@@ -232,15 +232,15 @@ def main():
     # ---------------------------------------------------------------------------------
     # model 
     # ---------------------------------------------------------------------------------
-    # hyperparameters = set_hyperparameters(config)
-    
+    hyperparameters = set_hyperparameters(config)
+    '''
     hyperparameters = {}
     hyperparameters["optimizer"] = "sgd"
     hyperparameters["learning_rate"] = 0.007810281400752681
     hyperparameters["weight_decay"] = 0.009146917668628398
     hyperparameters["dropout_attention"] = 0.14051600390758243
     hyperparameters["dropout_linear"] = 0.4620213627675807
-    
+    '''
     model = PhysicoModel(EMBEDDING_SIZE, SEQ_MAX_LENGTH, DEVICE, traV_embed_len, traJ_embed_len, trbV_embed_len, trbJ_embed_len, mhc_embed_len, hyperparameters)
     # ---------------------------------------------------------------------------------
     # training
@@ -270,7 +270,7 @@ def main():
     )
 
     lr_monitor = LearningRateMonitor(logging_interval='epoch')
-    swa = StochasticWeightAveraging(swa_lrs=hyperparameters["learning_rate"]*0.1, swa_epoch_start=30)
+    swa = StochasticWeightAveraging(swa_lrs=hyperparameters["learning_rate"]*0.1, swa_epoch_start=45)
     
     # Training
     trainer = pl.Trainer(
