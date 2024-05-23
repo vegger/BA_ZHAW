@@ -20,7 +20,7 @@ torch.manual_seed(42)
 MODEL_NAME = "PhysicoModel"
 EMBEDDING_SIZE = 1024
 BATCH_SIZE = 256
-EPOCHS = 275
+EPOCHS = 1
 # IMPORTANT: keep NUM_WORKERS = 0!
 NUM_WORKERS = 0
 
@@ -58,8 +58,11 @@ class PadCollate:
 
         for item in batch:
             epitope_embeddings.append(item["epitope_embedding"])
+            epitope_sequence.append(item["epitope_sequence"])
             tra_cdr3_embeddings.append(item["tra_cdr3_embedding"])
+            tra_cdr3_sequence.append(item["tra_cdr3_sequence"])
             trb_cdr3_embeddings.append(item["trb_cdr3_embedding"])
+            trb_cdr3_sequence.append(item["trb_cdr3_sequence"])
             epitope_physico.append(item["epitope_physico"])
             tra_physico.append(item["tra_physico"])
             trb_physico.append(item["trb_physico"])
@@ -97,8 +100,11 @@ class PadCollate:
 
         return {
             "epitope_embedding": epitope_embeddings,
+            "epitope_sequence": epitope_sequence,
             "tra_cdr3_embedding": tra_cdr3_embeddings,
+            "tra_cdr3_sequence": tra_cdr3_sequence,
             "trb_cdr3_embedding": trb_cdr3_embeddings,
+            "trb_cdr3_sequence": trb_cdr3_sequence,
             "epitope_physico": epitope_physico, 
             "tra_physico": tra_physico,
             "trb_physico": trb_physico,
