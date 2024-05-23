@@ -123,14 +123,6 @@ class VanillaModel(pl.LightningModule):
         self.trbV_embed = nn.Embedding(trbV_embed_len, self.allele_info_dim)
         self.trbJ_embed = nn.Embedding(trbJ_embed_len, self.allele_info_dim)
         self.mhc_embed = nn.Embedding(mhc_embed_len, self.allele_info_dim)
-        
-        # Define TransformerBlock for Epitope/TRA/TRB with their physico properties
-        # Note: embed_dim must be dividable by num_heads!
-        self.transformer_in = embed_dim
-        self.num_heads = 2
-        # same as in EPIC-TRACE paper
-        self.n_hidden = int(1.5*self.transformer_in)
-        self.multihead_attn_physico = TransformerBlock(self.transformer_in, self.num_heads, False, self.n_hidden, self.hyperparameters["dropout_attention"])   
 
         # Define TransformerBlock for TRA+Epitope and TRB+Epitope after physico attention
         # Note: embed_dim must be dividable by num_heads!
@@ -290,7 +282,7 @@ class VanillaModel(pl.LightningModule):
                 # print(f"task 3: {task}")
                 tpp_3.append((test_predictions[i], test_labels[i]))
             elif task == "TPP4":
-                # print("in TPP4")
+                print("in TPP4")
                 tpp_4.append((test_predictions[i], test_labels[i]))
             else: 
                 print("ERROR IN TASK")
@@ -307,7 +299,7 @@ class VanillaModel(pl.LightningModule):
         self.log("ROCAUC_Test_TPP3", self.auroc(torch.tensor([item[0] for item in tpp_3]), torch.tensor([item[1] for item in tpp_3]).to(torch.long)), prog_bar=True)
         self.log("AP_Test_TPP3", self.avg_precision(torch.tensor([item[0] for item in tpp_3]), torch.tensor([item[1] for item in tpp_3]).to(torch.long)), prog_bar=True)  
         
-        print(f"len(tpp_4): {tpp_4}")
+        print(f"len(tpp_4): {len(tpp_4)}")
         self.log("ROCAUC_Test_TPP4", self.auroc(torch.tensor([item[0] for item in tpp_4]), torch.tensor([item[1] for item in tpp_4]).to(torch.long)), prog_bar=True)
         self.log("AP_Test_TPP4", self.avg_precision(torch.tensor([item[0] for item in tpp_4]), torch.tensor([item[1] for item in tpp_4]).to(torch.long)), prog_bar=True)  
         
