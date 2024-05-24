@@ -97,7 +97,7 @@ class BetaVanillaModel(pl.LightningModule):
     def __init__(self, embed_dim, max_seq_length, device_, trbV_embed_len, trbJ_embed_len, mhc_embed_len, hyperparameters):
         super(BetaVanillaModel, self).__init__()
         """
-        This model uses paired input (if possible)!
+        This model uses beta only information!
         Furthermore, this model DOES NOT (!) use physicochemical properties.        
         """
         self.save_hyperparameters()
