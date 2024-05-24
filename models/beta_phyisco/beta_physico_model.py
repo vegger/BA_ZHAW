@@ -226,7 +226,9 @@ class BetaPhysicoModel(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         epitope_embedding = batch["epitope_embedding"]
+        epitope_sequence = batch["epitope_sequence"]
         trb_cdr3_embedding = batch["trb_cdr3_embedding"]
+        trb_cdr3_sequence = batch["trb_cdr3_sequence"]
         epitope_physico = batch["epitope_physico"]
         trb_pyhsico = batch["trb_physico"]
         v_beta = batch["v_beta"]
