@@ -19,7 +19,7 @@ torch.manual_seed(42)
 # ---------------------------------------------------------------------------------
 MODEL_NAME = "BetaPhysicoModel"
 EMBEDDING_SIZE = 1024
-BATCH_SIZE = 2128
+BATCH_SIZE = 128
 EPOCHS = 1
 # IMPORTANT: keep NUM_WORKERS = 0!
 NUM_WORKERS = 0

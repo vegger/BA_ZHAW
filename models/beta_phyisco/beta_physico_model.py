@@ -49,7 +49,6 @@ class TransformerBlock(nn.Module):
     
 
 class Classifier(nn.Module): 
-    # input_dim: 129024
     # hidden_dim: 64
     def __init__(self, input_dim, hidden_dim, dropout_linear):
         super(Classifier, self).__init__()
@@ -233,6 +232,7 @@ class BetaPhysicoModel(pl.LightningModule):
         v_beta = batch["v_beta"]
         j_beta = batch["j_beta"]
         mhc = batch["mhc"]
+        task = batch["task"]
         label = batch["label"]
         
         output = self(epitope_embedding, trb_cdr3_embedding, epitope_physico, trb_pyhsico, v_beta, j_beta, mhc).squeeze(1)
