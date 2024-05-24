@@ -65,23 +65,27 @@ def parallel_compute_properties(df, column_name):
 
 def main():
     # MOST RECENT
-    dataset = "train"
-    precision = "allele"
-    df = pd.read_csv(f"/teamspace/studios/this_studio/BA_ZHAW/models/physico/WnB_Experiments_Datasets/paired_{precision}/{precision}/{dataset}.tsv", sep="\t")
+    dataset = "test"
+    precision = "gene"
+    paired_or_beta = "beta" # or: "paired"
+    df = pd.read_csv(f"/teamspace/studios/this_studio/BA_ZHAW/models/beta_phyisco/WnB_Experiments_Datasets/{paired_or_beta}_{precision}/{precision}/{dataset}.tsv", sep="\t")
     
     
     epitope_properties = parallel_compute_properties(df, "Epitope")
-    np.savez(f"./{dataset}_paired_epitope_{precision}_physico.npz", **epitope_properties)
+    np.savez(f"./{dataset}_{paired_or_beta}_epitope_{precision}_physico.npz", **epitope_properties)
     
     gc.collect()
-    
+
+    '''
+    # ATTENTION: only comment out if paired! => no TRA in beta only obviously
     tra_properties = parallel_compute_properties(df, "TRA_CDR3")
     np.savez(f"./{dataset}_paired_TRA_{precision}_physico.npz", **tra_properties)  
     
     gc.collect()
+    '''
     
     trb_properties = parallel_compute_properties(df, "TRB_CDR3")
-    np.savez(f"./{dataset}_paired_TRB_{precision}_physico.npz", **trb_properties)    
+    np.savez(f"./{dataset}_{paired_or_beta}_TRB_{precision}_physico.npz", **trb_properties)    
     
     gc.collect()
 
