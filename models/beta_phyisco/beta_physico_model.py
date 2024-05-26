@@ -180,26 +180,26 @@ class BetaPhysicoModel(pl.LightningModule):
         trb_with_physico = torch.cat([trb_cdr3, trb_physico_embedd], dim=1)
 
         trb_epitope = torch.cat([trb_with_physico, epitope_with_physico], dim=1)
-        print(f"trb_epitope.shape: {trb_epitope.shape}")
+        # print(f"trb_epitope.shape: {trb_epitope.shape}")
 
-        trb_v_embed = self.trbV_embed(torch.tensor(v_beta).to(self.device_)).unsqueeze(0).permute(1, 0, 2)
-        trb_j_embed = self.trbJ_embed(torch.tensor(j_beta).to(self.device_)).unsqueeze(0).permute(1, 0, 2)
-        mhc_embed = self.mhc_embed(torch.tensor(mhc).to(self.device_)).unsqueeze(0).permute(1, 0, 2)
+        trb_v_embed = self.trbV_embed(v_beta.to(self.device_)).unsqueeze(0).permute(1, 0, 2)
+        trb_j_embed = self.trbJ_embed(j_beta.to(self.device_)).unsqueeze(0).permute(1, 0, 2)
+        mhc_embed = self.mhc_embed(mhc.to(self.device_)).unsqueeze(0).permute(1, 0, 2)
         
-        
+        '''
         print(f"trb_v_embed: {trb_v_embed.shape}")
         print(f"trb_j_embed: {trb_j_embed.shape}")
         print(f"mhc_embed: {mhc_embed.shape}")
-        
+        '''
 
         trb_epitope_vj_mhc = torch.cat([trb_epitope, trb_v_embed, trb_j_embed, mhc_embed], dim=1)
-        print(f"trb_epitope_vj_mhc.shape: {trb_epitope_vj_mhc.shape}")
+        # print(f"trb_epitope_vj_mhc.shape: {trb_epitope_vj_mhc.shape}")
 
         trb_epitope_vj_mhc_attention = self.multihead_attn_global(trb_epitope_vj_mhc) 
-        print(f"trb_epitope_vj_mhc_attention.shape: {trb_epitope_vj_mhc_attention.shape}")       
+        # print(f"trb_epitope_vj_mhc_attention.shape: {trb_epitope_vj_mhc_attention.shape}")       
 
         trb_epitope_vj_mhc_flatten = trb_epitope_vj_mhc_attention.view(trb_epitope_vj_mhc_attention.size(0), -1)
-        print(f"trb_epitope_vj_mhc_flatten.shape: {trb_epitope_vj_mhc_flatten.shape}")
+        # print(f"trb_epitope_vj_mhc_flatten.shape: {trb_epitope_vj_mhc_flatten.shape}")
         
         logits = self.classifier(trb_epitope_vj_mhc_flatten)
         # print(f"logits: {logits}")
@@ -356,7 +356,7 @@ class BetaPhysicoModel(pl.LightningModule):
         if optimizer == "sgd": 
             optimizer = torch.optim.SGD(self.parameters(),
                         lr=learning_rate, momentum=0.9)        
-        if optimizer == "adam": 
+        elif optimizer == "adam": 
             optimizer = torch.optim.Adam(self.parameters(), lr=learning_rate, betas=betas, weight_decay=weight_decay)
         else: 
             print("OPTIMIZER NOT FOUND")
