@@ -10,9 +10,9 @@ class PairedVanilla(Dataset):
         """
         
         self.dataset_path = dataset_path
-        self.epitope_embeddings_path = f"{embed_base_path}/Epitope_embeddings.npz"
-        self.tra_embeddings_path = f"{embed_base_path}/TRA_CDR3_embeddings.npz"
-        self.trb_embeddings_path = f"{embed_base_path}/TRB_CDR3_embeddings.npz"
+        self.epitope_embeddings_path = f"{embed_base_path}/Epitope_paired_embeddings.npz"
+        self.tra_embeddings_path = f"{embed_base_path}/TRA_paired_embeddings.npz"
+        self.trb_embeddings_path = f"{embed_base_path}/TRB_paired_embeddings.npz"
         
         self.transform = transform
         self.data_frame = pd.read_csv(self.dataset_path, sep='\t')
