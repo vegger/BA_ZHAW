@@ -219,7 +219,7 @@ class PhysicoModel(pl.LightningModule):
         self.n_hidden = int(1.5*self.transformer_in)
         self.transformer_drop_out = 0.2
         self.multihead_attn_tra_epitope = TransformerBlock(self.transformer_in, self.num_heads, False, self.n_hidden, self.hyperparameters["dropout_attention"])
-        self.multihead_attn_tra_epitope = TransformerBlock(self.transformer_in, self.num_heads, False, self.n_hidden, self.hyperparameters["dropout_attention"])
+        self.multihead_attn_trb_epitope = TransformerBlock(self.transformer_in, self.num_heads, False, self.n_hidden, self.hyperparameters["dropout_attention"])
 
 
         # Define Classifier
@@ -425,7 +425,7 @@ class PhysicoModel(pl.LightningModule):
         self.log("ROCAUC_Test_TPP3", self.auroc(torch.tensor([item[0] for item in tpp_3]), torch.tensor([item[1] for item in tpp_3]).to(torch.long)), prog_bar=True)
         self.log("AP_Test_TPP3", self.avg_precision(torch.tensor([item[0] for item in tpp_3]), torch.tensor([item[1] for item in tpp_3]).to(torch.long)), prog_bar=True)  
         
-        print(f"len(tpp_4): {tpp_4}")
+        # print(f"len(tpp_4): {tpp_4}")
         self.log("ROCAUC_Test_TPP4", self.auroc(torch.tensor([item[0] for item in tpp_4]), torch.tensor([item[1] for item in tpp_4]).to(torch.long)), prog_bar=True)
         self.log("AP_Test_TPP4", self.avg_precision(torch.tensor([item[0] for item in tpp_4]), torch.tensor([item[1] for item in tpp_4]).to(torch.long)), prog_bar=True)  
         
