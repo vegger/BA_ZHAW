@@ -207,7 +207,9 @@ class PhysicoModel(pl.LightningModule):
         self.num_heads = 2
         # same as in EPIC-TRACE paper
         self.n_hidden = int(1.5*self.transformer_in)
-        self.multihead_attn_physico = TransformerBlock(self.transformer_in, self.num_heads, False, self.n_hidden, self.hyperparameters["dropout_attention"])   
+        self.multihead_attn_physico_epitope = TransformerBlock(self.transformer_in, self.num_heads, False, self.n_hidden, self.hyperparameters["dropout_attention"])   
+        self.multihead_attn_physico_tra = TransformerBlock(self.transformer_in, self.num_heads, False, self.n_hidden, self.hyperparameters["dropout_attention"])   
+        self.multihead_attn_physico_trb = TransformerBlock(self.transformer_in, self.num_heads, False, self.n_hidden, self.hyperparameters["dropout_attention"])   
 
         # Define TransformerBlock for TRA+Epitope and TRB+Epitope after physico attention
         # Note: embed_dim must be dividable by num_heads!
@@ -273,9 +275,9 @@ class PhysicoModel(pl.LightningModule):
         
         # x of shape (max_seq_length, batch_size, embed_dim): Input sequences.
         # print(f"permute epitope shape: {epitope_with_physico.permute(1, 0, 2).shape}")
-        epitope_with_physico_attention = self.multihead_attn_physico(epitope_with_physico.permute(1, 0, 2))
-        tra_with_physico_attention = self.multihead_attn_physico(tra_with_physico.permute(1, 0, 2))
-        trb_with_physico_attention = self.multihead_attn_physico(trb_with_physico.permute(1, 0, 2))
+        epitope_with_physico_attention = self.multihead_attn_physico_epitope(epitope_with_physico.permute(1, 0, 2))
+        tra_with_physico_attention = self.multihead_attn_physico_tra(tra_with_physico.permute(1, 0, 2))
+        trb_with_physico_attention = self.multihead_attn_physico_trb(trb_with_physico.permute(1, 0, 2))
         
         '''
         print(f"epitope_with_physico_attention.shape: {epitope_with_physico_attention.shape}")
