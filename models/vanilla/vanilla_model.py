@@ -330,7 +330,7 @@ class VanillaModel(pl.LightningModule):
         }
 
         df = pd.DataFrame(data)
-        # df.to_csv("./test_paired_df.tsv", sep="\t")
+        # df.to_csv("./reclassifed_paired_gene_df.tsv", sep="\t")
 
         self.test_predictions.clear()
         self.test_labels.clear()
@@ -372,7 +372,7 @@ class VanillaModel(pl.LightningModule):
         if optimizer == "sgd": 
             optimizer = torch.optim.SGD(self.parameters(),
                         lr=learning_rate, momentum=0.9)        
-        if optimizer == "adam": 
+        elif optimizer == "adam": 
             optimizer = torch.optim.Adam(self.parameters(), lr=learning_rate, betas=betas, weight_decay=weight_decay)
         else: 
             print("OPTIMIZER NOT FOUND")
