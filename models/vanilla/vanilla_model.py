@@ -282,7 +282,7 @@ class VanillaModel(pl.LightningModule):
                 # print(f"task 3: {task}")
                 tpp_3.append((test_predictions[i], test_labels[i]))
             elif task == "TPP4":
-                print("in TPP4")
+                # print("in TPP4")
                 tpp_4.append((test_predictions[i], test_labels[i]))
             else: 
                 print("ERROR IN TASK")
