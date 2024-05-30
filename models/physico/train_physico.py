@@ -138,8 +138,8 @@ def main():
     # -----------------------------------------------------------------------------
     # W&B Setup
     # -----------------------------------------------------------------------------
-    print(f"NO positional encoding & NO He initialization")
-    experiment_name = f"Experiment (BugFixed) - {MODEL_NAME}"
+    print(f"last call")
+    experiment_name = f"Experiment (last call gene) - {MODEL_NAME}"
     load_dotenv()
     PROJECT_NAME = os.getenv("MAIN_PROJECT_NAME")
     print(f"PROJECT_NAME: {PROJECT_NAME}")
@@ -151,7 +151,8 @@ def main():
     # -----------------------------------------------------------------------------
     # Download corresponding artifact (= dataset) from W&B
     precision = "gene" # or allele
-    # precision = "allele"
+    # precision = "allele"
+    print(f"precision: {precision}")
     dataset_name = f"paired_{precision}"
     artifact = run.use_artifact(f"{dataset_name}:latest")
     data_dir = artifact.download(f"./WnB_Experiments_Datasets/paired_{precision}")
