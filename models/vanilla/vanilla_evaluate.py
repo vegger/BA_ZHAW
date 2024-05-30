@@ -107,7 +107,7 @@ def forward_with_softmax(epitope_embedding, tra_cdr3_embedding, trb_cdr3_embeddi
 def main():
     global model
 
-    experiment_name = f"Experiment Evaluation - {MODEL_NAME}"
+    experiment_name = f"Experiment Evaluation (Gene) - {MODEL_NAME}"
     load_dotenv()
     PROJECT_NAME = os.getenv("MAIN_PROJECT_NAME")
     print(f"PROJECT_NAME: {PROJECT_NAME}")
@@ -115,7 +115,9 @@ def main():
     config = wandb.config
 
     # Download corresponding artifact (= dataset) from W&B
-    precision = "allele"  # or allele
+    precision = "allele"  # or gene
+    # precision = "gene"
+    print(f"precision: {precision}")
     dataset_name = f"paired_{precision}"
     artifact = run.use_artifact(f"{dataset_name}:latest")
     data_dir = artifact.download(f"./WnB_Experiments_Datasets/paired_{precision}")
@@ -145,21 +147,21 @@ def main():
 
     embed_base_dir = "/teamspace/studios/this_studio/BA/paired"
 
-    # unseen_test_dataset = PairedVanilla(unseen_test_file_path, embed_base_dir, traV_dict, traJ_dict, trbV_dict, trbJ_dict, mhc_dict)
-    test_dataset = PairedVanilla(test_file_path, embed_base_dir, traV_dict, traJ_dict, trbV_dict, trbJ_dict, mhc_dict)
+    unseen_test_dataset = PairedVanilla(unseen_test_file_path, embed_base_dir, traV_dict, traJ_dict, trbV_dict, trbJ_dict, mhc_dict)
+    # test_dataset = PairedVanilla(test_file_path, embed_base_dir, traV_dict, traJ_dict, trbV_dict, trbJ_dict, mhc_dict)
 
-    # can be seen in the W&B log
+    # can be seen in the W&B log, same for both Allele and Gene (SEQ_MAX_LENGTH = 30)
     SEQ_MAX_LENGTH = 30
     print(f"this is SEQ_MAX_LENGTH: {SEQ_MAX_LENGTH}")
     pad_collate = PadCollate(SEQ_MAX_LENGTH).pad_collate
 
     generator = torch.Generator().manual_seed(42)
-    # test_sampler = SequentialSampler(unseen_test_dataset)
-    test_sampler = SequentialSampler(test_dataset)
+    test_sampler = SequentialSampler(unseen_test_dataset)
+    # test_sampler = SequentialSampler(test_dataset)
 
     test_dataloader = DataLoader(
-        # unseen_test_dataset,
-        test_dataset,
+        unseen_test_dataset,
+        # test_dataset,
         batch_size=1,
         sampler=test_sampler,
         num_workers=NUM_WORKERS,
@@ -168,6 +170,7 @@ def main():
 
     trainer = pl.Trainer(accelerator=DEVICE)
 
+    # Unimportant as model anyways in eval but necessary class variable
     hyperparameters = {}
     hyperparameters["optimizer"] = "adam"
     hyperparameters["learning_rate"] = 5e-3
@@ -177,13 +180,19 @@ def main():
 
     model = VanillaModel(EMBEDDING_SIZE, SEQ_MAX_LENGTH, DEVICE, traV_embed_len, traJ_embed_len, trbV_embed_len, trbJ_embed_len, mhc_embed_len, hyperparameters)
 
-    checkpoint_path = "/teamspace/studios/this_studio/BA_ZHAW/models/vanilla/checkpoints/resilient-sweep-17/epoch=16-val_loss=0.44.ckpt"
+    # checkpoint_path = "/teamspace/studios/this_studio/BA_ZHAW/models/vanilla/checkpoints/resilient-sweep-17/epoch=16-val_loss=0.44.ckpt"
+    # checkpoint_path = "/teamspace/studios/this_studio/BA_ZHAW/models/vanilla/checkpoints/wandering-sweep-24/epoch=25-val_loss=0.51.ckpt"
+    checkpoint_path = "/teamspace/studios/this_studio/BA_ZHAW/models/vanilla/checkpoints/deep-sweep-15/epoch=19-val_loss=0.42.ckpt"
     checkpoint = torch.load(checkpoint_path)
     print(checkpoint.keys())
-    model.load_state_dict(checkpoint["state_dict"])
+    state_dict = checkpoint["state_dict"]
+    filtered_state_dict = {k: v for k, v in state_dict.items() if "multihead_attn_physico" not in k}
+    model.load_state_dict(filtered_state_dict)
     
-    # trainer.test(model, dataloaders=test_dataloader) 
+    trainer.test(model, dataloaders=test_dataloader) 
 
+    '''
+    # Working but not used yet in report as time is running
     model.to(DEVICE)
     model.eval()
 
@@ -215,7 +224,7 @@ def main():
             )
 
         # TODO: if a list is passed to the ig => list is returned => handle it correspondingly
-        attributions_ig = attributions_ig.cpu().numpy()
+        # attributions_ig = attributions_ig.cpu().numpy()
         
         print(f"attributions_ig: \n{attributions_ig}")
         print(f"delta: \n{delta}")
@@ -224,7 +233,7 @@ def main():
         # plot_ig_attributions(attributions_ig.squeeze(), feature_names)
 
         break # check only first item of the batch! (at least for now)
-    
+    '''
 
 if __name__ == "__main__":
     main()
