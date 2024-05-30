@@ -218,7 +218,9 @@ class PhysicoModel(pl.LightningModule):
         # same as in EPIC-TRACE paper
         self.n_hidden = int(1.5*self.transformer_in)
         self.transformer_drop_out = 0.2
-        self.multihead_attn_global = TransformerBlock(self.transformer_in, self.num_heads, False, self.n_hidden, self.hyperparameters["dropout_attention"])
+        self.multihead_attn_tra_epitope = TransformerBlock(self.transformer_in, self.num_heads, False, self.n_hidden, self.hyperparameters["dropout_attention"])
+        self.multihead_attn_tra_epitope = TransformerBlock(self.transformer_in, self.num_heads, False, self.n_hidden, self.hyperparameters["dropout_attention"])
+
 
         # Define Classifier
         # flattened output of the transformer:
@@ -311,8 +313,8 @@ class PhysicoModel(pl.LightningModule):
         # print(f"trb_epitope_vj_mhc.shape: {trb_epitope_vj_mhc.shape}")
 
         # x of shape (max_seq_length, batch_size, embed_dim): Input sequences.
-        tra_epitope_vj_mhc_attention = self.multihead_attn_global(tra_epitope_vj_mhc)
-        trb_epitope_vj_mhc_attention = self.multihead_attn_global(trb_epitope_vj_mhc) 
+        tra_epitope_vj_mhc_attention = self.multihead_attn_tra_epitope(tra_epitope_vj_mhc)
+        trb_epitope_vj_mhc_attention = self.multihead_attn_trb_epitope(trb_epitope_vj_mhc) 
         # print(f"tra_epitope_vj_mhc_attention.shape: {tra_epitope_vj_mhc_attention.shape}") 
         # print(f"trb_epitope_vj_mhc_attention.shape: {trb_epitope_vj_mhc_attention.shape}")       
 
@@ -385,11 +387,11 @@ class PhysicoModel(pl.LightningModule):
         test_labels = torch.stack(self.test_labels)
         # print(f"on_test_epoch_end, test_labels: {test_labels}")
         test_tasks = self.test_tasks
-
+        '''
         print(f"len(self.test_predictions): {len(self.test_predictions)}")
         print(f"len(self.test_labels): {len(self.test_labels)}")
         print(f"len(self.test_tasks): {len(self.test_tasks)}")
-
+        '''
         tpp_1 = []
         tpp_2 = []
         tpp_3 = []
