@@ -115,8 +115,8 @@ def main():
     config = wandb.config
 
     # Download corresponding artifact (= dataset) from W&B
-    precision = "allele"  # or gene
-    # precision = "gene"
+    # precision = "allele"  # or gene
+    precision = "gene"
     print(f"precision: {precision}")
     dataset_name = f"paired_{precision}"
     artifact = run.use_artifact(f"{dataset_name}:latest")
@@ -148,7 +148,7 @@ def main():
     embed_base_dir = "/teamspace/studios/this_studio/BA/paired"
 
     unseen_test_dataset = PairedVanilla(unseen_test_file_path, embed_base_dir, traV_dict, traJ_dict, trbV_dict, trbJ_dict, mhc_dict)
-    # test_dataset = PairedVanilla(test_file_path, embed_base_dir, traV_dict, traJ_dict, trbV_dict, trbJ_dict, mhc_dict)
+    # test_dataset = PairedVanilla(test_file_path, embed_base_dir, traV_dict, traJ_dict, trbV_dict, trbJ_dict, mhc_dict)
 
     # can be seen in the W&B log, same for both Allele and Gene (SEQ_MAX_LENGTH = 30)
     SEQ_MAX_LENGTH = 30
@@ -157,11 +157,11 @@ def main():
 
     generator = torch.Generator().manual_seed(42)
     test_sampler = SequentialSampler(unseen_test_dataset)
-    # test_sampler = SequentialSampler(test_dataset)
+    # test_sampler = SequentialSampler(test_dataset)
 
     test_dataloader = DataLoader(
         unseen_test_dataset,
-        # test_dataset,
+        # test_dataset,
         batch_size=1,
         sampler=test_sampler,
         num_workers=NUM_WORKERS,
@@ -179,13 +179,21 @@ def main():
     hyperparameters["dropout_linear"] = 0.45
 
     model = VanillaModel(EMBEDDING_SIZE, SEQ_MAX_LENGTH, DEVICE, traV_embed_len, traJ_embed_len, trbV_embed_len, trbJ_embed_len, mhc_embed_len, hyperparameters)
-
-    # checkpoint_path = "/teamspace/studios/this_studio/BA_ZHAW/models/vanilla/checkpoints/resilient-sweep-17/epoch=16-val_loss=0.44.ckpt"
+    # Paired Vanilla Gene:
+    # checkpoint_path = "/teamspace/studios/this_studio/BA_ZHAW/models/vanilla/checkpoints/trim-sweep-23/epoch=20-val_loss=0.49.ckpt"
+    # checkpoint_path = "/teamspace/studios/this_studio/BA_ZHAW/models/vanilla/checkpoints/fanciful-sweep-31/epoch=25-val_loss=0.51.ckpt"
+    # checkpoint_path = "/teamspace/studios/this_studio/BA_ZHAW/models/vanilla/checkpoints/playful-sweep-17/epoch=36-val_loss=0.51.ckpt"
+    # checkpoint_path = "/teamspace/studios/this_studio/BA_ZHAW/models/vanilla/checkpoints/proud-sweep-14/epoch=36-val_loss=0.51.ckpt"
+    # checkpoint_path = "/teamspace/studios/this_studio/BA_ZHAW/models/vanilla/checkpoints/faithful-sweep-27/epoch=18-val_loss=0.51.ckpt"
     # checkpoint_path = "/teamspace/studios/this_studio/BA_ZHAW/models/vanilla/checkpoints/wandering-sweep-24/epoch=25-val_loss=0.51.ckpt"
-    checkpoint_path = "/teamspace/studios/this_studio/BA_ZHAW/models/vanilla/checkpoints/deep-sweep-15/epoch=19-val_loss=0.42.ckpt"
-    checkpoint = torch.load(checkpoint_path)
+    # checkpoint_path = "/teamspace/studios/this_studio/BA_ZHAW/models/vanilla/checkpoints/valiant-sweep-15/epoch=20-val_loss=0.49.ckpt"
+    # Paired Vanilla Allele: 
+    # checkpoint_path = ""
+    checkpoint = torch.load(checkpoint_path, map_location=DEVICE)
     print(checkpoint.keys())
     state_dict = checkpoint["state_dict"]
+    # unfortunately the Transformer_Physico was left in the model scirpt but not used. After deleting it in the script the stored files still contain it. 
+    # IMPORTANT: Filter the unnecessary/unused PhysicoTransformer Block!
     filtered_state_dict = {k: v for k, v in state_dict.items() if "multihead_attn_physico" not in k}
     model.load_state_dict(filtered_state_dict)
     
@@ -193,15 +201,16 @@ def main():
 
     '''
     # Working but not used yet in report as time is running
+    # IMPORTANT: Here a GPU is needed wheather for the eval above not necessarily!
     model.to(DEVICE)
     model.eval()
 
     # TODO: here instead of "only" check influence of TRA_V => pass a list
     lig = LayerIntegratedGradients(model, [model.traV_embed])
     
-    # ig = IntegratedGradients(forward_with_softmax)
+    # ig = IntegratedGradients(forward_with_softmax)
     for batch in test_dataloader:
-        # print(f"batch: \n{batch}")
+        # print(f"batch: \n{batch}")
         epitope_embedding = batch["epitope_embedding"].requires_grad_().to(DEVICE)
         tra_cdr3_embedding = batch["tra_cdr3_embedding"].requires_grad_().to(DEVICE)
         trb_cdr3_embedding = batch["trb_cdr3_embedding"].requires_grad_().to(DEVICE)
@@ -218,13 +227,13 @@ def main():
 
         attributions_ig, delta = lig.attribute(
             inputs=inputs, 
-            # baselines=inputs,
+            # baselines=inputs,
             n_steps=1, 
             return_convergence_delta=True
             )
 
         # TODO: if a list is passed to the ig => list is returned => handle it correspondingly
-        # attributions_ig = attributions_ig.cpu().numpy()
+        # attributions_ig = attributions_ig.cpu().numpy()
         
         print(f"attributions_ig: \n{attributions_ig}")
         print(f"delta: \n{delta}")
