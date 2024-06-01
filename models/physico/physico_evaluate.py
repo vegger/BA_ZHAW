@@ -9,7 +9,7 @@ from captum.attr import IntegratedGradients, LayerIntegratedGradients
 import matplotlib.pyplot as plt
 import wandb
 import os
-from pyhsico_model import PhysicoModel
+from physico_model import PhysicoModel
 from dataclass_paired_physico import PairedPhysico
 from dotenv import load_dotenv
 
@@ -41,9 +41,12 @@ class PadCollate:
 
     def pad_collate(self, batch):
         epitope_embeddings, tra_cdr3_embeddings, trb_cdr3_embeddings = [], [], []
+        epitope_physico, tra_physico, trb_physico = [], [], []
         v_alpha, j_alpha, v_beta, j_beta = [], [], [], []
         epitope_sequence, tra_cdr3_sequence, trb_cdr3_sequence = [], [], []
-        mhc, task, labels = [], [], []
+        mhc = []
+        task = []
+        labels = []
 
         for item in batch:
             epitope_embeddings.append(item["epitope_embedding"])
@@ -52,6 +55,9 @@ class PadCollate:
             tra_cdr3_sequence.append(item["tra_cdr3_sequence"])
             trb_cdr3_embeddings.append(item["trb_cdr3_embedding"])
             trb_cdr3_sequence.append(item["trb_cdr3_sequence"])
+            epitope_physico.append(item["epitope_physico"])
+            tra_physico.append(item["tra_physico"])
+            trb_physico.append(item["trb_physico"])
             v_alpha.append(item["v_alpha"])
             j_alpha.append(item["j_alpha"])
             v_beta.append(item["v_beta"])
@@ -71,12 +77,16 @@ class PadCollate:
         epitope_embeddings = pad_embeddings(epitope_embeddings)
         tra_cdr3_embeddings = pad_embeddings(tra_cdr3_embeddings)
         trb_cdr3_embeddings = pad_embeddings(trb_cdr3_embeddings)
-        
+
         v_alpha = torch.tensor(v_alpha, dtype=torch.int32)
         j_alpha = torch.tensor(j_alpha, dtype=torch.int32)
         v_beta = torch.tensor(v_beta, dtype=torch.int32)
         j_beta = torch.tensor(j_beta, dtype=torch.int32)
         mhc = torch.tensor(mhc, dtype=torch.int32)
+
+        epitope_physico = torch.stack(epitope_physico)
+        tra_physico = torch.stack(tra_physico)
+        trb_physico = torch.stack(trb_physico)
 
         labels = torch.stack(labels)
 
@@ -87,6 +97,9 @@ class PadCollate:
             "tra_cdr3_sequence": tra_cdr3_sequence,
             "trb_cdr3_embedding": trb_cdr3_embeddings,
             "trb_cdr3_sequence": trb_cdr3_sequence,
+            "epitope_physico": epitope_physico, 
+            "tra_physico": tra_physico,
+            "trb_physico": trb_physico,
             "v_alpha": v_alpha,
             "j_alpha": j_alpha,
             "v_beta": v_beta,
@@ -107,7 +120,7 @@ def forward_with_softmax(epitope_embedding, tra_cdr3_embedding, trb_cdr3_embeddi
 def main():
     global model
 
-    experiment_name = f"Experiment Evaluation (Gene) - {MODEL_NAME}"
+    experiment_name = f"Experiment Evaluation (Allele) - {MODEL_NAME}"
     load_dotenv()
     PROJECT_NAME = os.getenv("MAIN_PROJECT_NAME")
     print(f"PROJECT_NAME: {PROJECT_NAME}")
@@ -147,8 +160,19 @@ def main():
 
     embed_base_dir = "/teamspace/studios/this_studio/BA/paired"
 
-    unseen_test_dataset = PairedVanilla(unseen_test_file_path, embed_base_dir, traV_dict, traJ_dict, trbV_dict, trbJ_dict, mhc_dict)
-    # test_dataset = PairedVanilla(test_file_path, embed_base_dir, traV_dict, traJ_dict, trbV_dict, trbJ_dict, mhc_dict)
+    physico_base_dir = "/teamspace/studios/this_studio/BA/physico"
+
+    train_physico_epi = f"{physico_base_dir}/scaled_train_paired_epitope_{precision}_physico.npz"
+    train_physico_tra = f"{physico_base_dir}/scaled_train_paired_TRA_{precision}_physico.npz"
+    train_physico_trb = f"{physico_base_dir}/scaled_train_paired_TRB_{precision}_physico.npz"
+    test_physico_epi = f"{physico_base_dir}/scaled_test_paired_epitope_{precision}_physico.npz"
+    test_physico_tra = f"{physico_base_dir}/scaled_test_paired_TRA_{precision}_physico.npz"
+    test_physico_trb = f"{physico_base_dir}/scaled_test_paired_TRB_{precision}_physico.npz"
+    val_physico_epi = f"{physico_base_dir}/scaled_validation_paired_epitope_{precision}_physico.npz"
+    val_physico_tra = f"{physico_base_dir}/scaled_validation_paired_TRA_{precision}_physico.npz"
+    val_physico_trb = f"{physico_base_dir}/scaled_validation_paired_TRB_{precision}_physico.npz"
+
+    unseen_test_dataset = PairedPhysico(unseen_test_file_path, embed_base_dir, test_physico_epi, test_physico_tra, test_physico_trb, traV_dict, traJ_dict, trbV_dict, trbJ_dict, mhc_dict)
 
     # can be seen in the W&B log, same for both Allele and Gene (SEQ_MAX_LENGTH = 30)
     SEQ_MAX_LENGTH = 30
@@ -178,16 +202,18 @@ def main():
     hyperparameters["dropout_attention"] = 0.3
     hyperparameters["dropout_linear"] = 0.45
 
-    model = VanillaModel(EMBEDDING_SIZE, SEQ_MAX_LENGTH, DEVICE, traV_embed_len, traJ_embed_len, trbV_embed_len, trbJ_embed_len, mhc_embed_len, hyperparameters)
-
-    # checkpoint_path = "/teamspace/studios/this_studio/BA_ZHAW/models/vanilla/checkpoints/resilient-sweep-17/epoch=16-val_loss=0.44.ckpt"
-    # checkpoint_path = "/teamspace/studios/this_studio/BA_ZHAW/models/vanilla/checkpoints/wandering-sweep-24/epoch=25-val_loss=0.51.ckpt"
-    checkpoint_path = "/teamspace/studios/this_studio/BA_ZHAW/models/vanilla/checkpoints/deep-sweep-15/epoch=19-val_loss=0.42.ckpt"
-    checkpoint = torch.load(checkpoint_path)
+    model = PhysicoModel(EMBEDDING_SIZE, SEQ_MAX_LENGTH, DEVICE, traV_embed_len, traJ_embed_len, trbV_embed_len, trbJ_embed_len, mhc_embed_len, hyperparameters)
+    # Paired Phyisco Gene: 
+    # checkpoint_path = ""
+    # Paired Physico Allele:
+    # checkpoint_path = "/teamspace/studios/this_studio/BA_ZHAW/models/physico/checkpoints/laced-sweep-12/epoch=01-val_loss=0.69.ckpt"
+    # checkpoint_path = "/teamspace/studios/this_studio/BA_ZHAW/models/physico/checkpoints/brisk-sweep-17/epoch=08-val_loss=0.69.ckpt"
+    # 
+    # checkpoint_path = "/teamspace/studios/this_studio/BA_ZHAW/models/physico/checkpoints/leafy-sweep-29/epoch=11-val_loss=0.69.ckpt"
+    checkpoint = torch.load(checkpoint_path, map_location=DEVICE)
     print(checkpoint.keys())
     state_dict = checkpoint["state_dict"]
-    filtered_state_dict = {k: v for k, v in state_dict.items() if "multihead_attn_physico" not in k}
-    model.load_state_dict(filtered_state_dict)
+    model.load_state_dict(state_dict)
     
     trainer.test(model, dataloaders=test_dataloader) 
 
