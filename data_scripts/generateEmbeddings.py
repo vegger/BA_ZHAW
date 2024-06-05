@@ -54,13 +54,17 @@ def process_batch(processed_seqs):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate embeddings for protein sequences.")
 
-    parser.add_argument('file_name', type=str, help="The file name of the dataset.")
+    parser.add_argument('chain', type=str, help="The value is paired or beta")
+    parser.add_argument('input_file_name', type=str, help="The file name of the dataset.")
+    parser.add_argument('output_file_name', type=str, help="The name of the output file (TRB_beta_embeddings.npz)")
     parser.add_argument('column_name', type=str, help="The column name containing the sequences.")
     parser.add_argument('--prefix', type=str, default="embeddings_", help="Prefix for the output file.")
 
     args = parser.parse_args()
 
     df = load_data(args.file_name)
+    file_name = args.prefix + "embeddings.npz"
+    to_path = f"./{args.chain}/"
     sequences = set(df[args.column_name].to_list())
     processed_sequences = [(sequence, " ".join(list(re.sub(r"[UZOB]", "X", sequence)))) for sequence in sequences]
 
@@ -73,6 +77,4 @@ if __name__ == "__main__":
         batch_embeddings = process_batch(batch_sequences)
         sequence_to_embedding.update(batch_embeddings)
 
-    to_path = "./paired/"
-    file_name = args.prefix + "embeddings.npz"
     np.savez(to_path+file_name, **sequence_to_embedding)

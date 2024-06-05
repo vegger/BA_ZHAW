@@ -1,7 +1,9 @@
 import peptides
 import pandas as pd
 import numpy as np
+import argparse
 import torch
+import os
 import gc
 import multiprocessing as mp
 
@@ -63,32 +65,41 @@ def parallel_compute_properties(df, column_name):
 
     return sequence_properties
 
-def main():
-    # MOST RECENT
-    dataset = "test"
-    precision = "gene"
-    paired_or_beta = "beta" # or: "paired"
-    df = pd.read_csv(f"/teamspace/studios/this_studio/BA_ZHAW/models/beta_phyisco/WnB_Experiments_Datasets/{paired_or_beta}_{precision}/{precision}/{dataset}.tsv", sep="\t")
-    
+def main(data_path, dataset, precision, chain, output_path):
+    df = pd.read_csv(f"{data_path}/{dataset}.tsv", sep="\t")
     
     epitope_properties = parallel_compute_properties(df, "Epitope")
-    np.savez(f"./{dataset}_{paired_or_beta}_epitope_{precision}_physico.npz", **epitope_properties)
-    
+    np.savez(f"{output_path}/{dataset}_{chain}_epitope_{precision}_physico.npz", **epitope_properties)
     gc.collect()
-
-    '''
-    # ATTENTION: only comment out if paired! => no TRA in beta only obviously
-    tra_properties = parallel_compute_properties(df, "TRA_CDR3")
-    np.savez(f"./{dataset}_paired_TRA_{precision}_physico.npz", **tra_properties)  
     
-    gc.collect()
-    '''
+    if chain == "paired":
+      tra_properties = parallel_compute_properties(df, "TRA_CDR3")
+      np.savez(f"{output_path}/{dataset}_paired_TRA_{precision}_physico.npz", **tra_properties)  
+      gc.collect()
+    
     
     trb_properties = parallel_compute_properties(df, "TRB_CDR3")
-    np.savez(f"./{dataset}_{paired_or_beta}_TRB_{precision}_physico.npz", **trb_properties)    
-    
+    np.savez(f"{output_path}/{dataset}_{chain}_TRB_{precision}_physico.npz", **trb_properties)    
     gc.collect()
 
 if __name__ == "__main__":
     mp.set_start_method('spawn', force=True)
-    main()
+    parser = argparse.ArgumentParser(description="Generate embeddings for protein sequences.")
+
+    parser.add_argument('chain', type=str, help="The value is paired or beta")
+    parser.add_argument('data_path', type=str, help="The path to the input tsv file")
+    parser.add_argument('input_file', type=str, help="The input file without the tsv extension")
+    parser.add_argument('output_path', type=str, help="The path to de output directory")
+    parser.add_argument('precision', type=str, help="Either gene or allele")
+    args = parser.parse_args()
+    
+    chain = args.chain
+    data_path = args.data_path
+    dataset = args.input_file
+    precision = args.precision
+    output_path = args.output_path
+
+    if not os.path.exists(output_path):
+      os.makedirs(output_path)
+    
+    main(data_path, dataset, precision, chain, output_path)
