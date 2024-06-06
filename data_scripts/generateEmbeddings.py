@@ -25,9 +25,8 @@ model = model.to(device)
 model = model.eval()
 tokenizer = T5Tokenizer.from_pretrained(transformer_link, do_lower_case=False, legacy=True)
 
-def load_data(file_name): 
-    base_path = "./"
-    df = pd.read_csv(base_path+file_name, sep="\t")
+def load_data(file_path):
+    df = pd.read_csv(file_path, sep="\t")
 
     return df
 
