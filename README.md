@@ -76,7 +76,7 @@ pip install sentencepiece
 
 ### Run Data Pipeline
 - place the [plain_data](https://www.dropbox.com/scl/fo/ucke53zlkj9sau6qlg63q/ANL6-gCocJ5sj_zs0T59CVI?rlkey=ogbq0p0zedpef29fif1ihfs3u&st=n2e2x3d5&dl=0) folder in the data folder, where the README_PLAIN_DATA.md is located.
-- run data pipeline (First harmonizes and splits data, then creates embeddings and PhysicoChemical properties)
+- In order to execute the data pipeline, which harmonizes and splits data, then creates embeddings and PhysicoChemical properties, do the following:
   - Open data_pipeline.ipynb in the root folder
   - set the variable precision to `precision="allele"` or `precision="gene"`
   - in some environments like [lightning.ai](https://lightning.ai/), the `pipeline_data = './data'` needs to have an absolute path instead of the relative.
