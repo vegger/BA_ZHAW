@@ -79,6 +79,7 @@ pip install sentencepiece
 ```
 - Create conda environment as explained above and use it from now on
 - Open the project in the IDE of your choice
+- Ensure the project is set as the root directory in your IDE. Otherwise, you may encounter path errors when running commands like %run path/to/other_notebook.ipynb.
 
 ### Run Data Pipeline
 - place the [plain_data](https://www.dropbox.com/scl/fo/ucke53zlkj9sau6qlg63q/ANL6-gCocJ5sj_zs0T59CVI?rlkey=ogbq0p0zedpef29fif1ihfs3u&st=n2e2x3d5&dl=0) folder in the data folder, where the README_PLAIN_DATA.md is located.
