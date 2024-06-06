@@ -7,8 +7,8 @@ import numpy as np
 from pytorch_lightning.loggers import TensorBoardLogger, WandbLogger
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, random_split
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor, StochasticWeightAveraging
-from physico_model_new import PhysicoModel
-from dataclass_paired_physico import PairedPhysico 
+from beta_physico_model import BetaPhysicoModel
+from dataclass_beta_physico import BetaPhysico 
 from dotenv import load_dotenv
 
 
@@ -17,13 +17,14 @@ torch.manual_seed(42)
 # ---------------------------------------------------------------------------------
 # hyperparameters
 # ---------------------------------------------------------------------------------
-MODEL_NAME = "PhysicoModel"
+MODEL_NAME = "BetaPhysicoModel"
 EMBEDDING_SIZE = 1024
 BATCH_SIZE = 128
-EPOCHS = 250
+EPOCHS = 1
 # IMPORTANT: keep NUM_WORKERS = 0!
 NUM_WORKERS = 0
 
+MODEL_OUT = f"{MODEL_NAME}.pth"
 DEVICE = (
     "cuda"
     if torch.cuda.is_available()
@@ -49,10 +50,10 @@ class PadCollate:
         self.seq_max_length = seq_max_length
 
     def pad_collate(self, batch):
-        epitope_embeddings, tra_cdr3_embeddings, trb_cdr3_embeddings = [], [], []
-        epitope_physico, tra_physico, trb_physico = [], [], []
-        v_alpha, j_alpha, v_beta, j_beta = [], [], [], []
-        epitope_sequence, tra_cdr3_sequence, trb_cdr3_sequence = [], [], []
+        epitope_embeddings, trb_cdr3_embeddings = [], []
+        epitope_sequence, trb_cdr3_sequence = [], []
+        epitope_physico, trb_physico = [], []
+        v_beta, j_beta = [], []
         mhc = []
         task = []
         labels = []
@@ -60,15 +61,10 @@ class PadCollate:
         for item in batch:
             epitope_embeddings.append(item["epitope_embedding"])
             epitope_sequence.append(item["epitope_sequence"])
-            tra_cdr3_embeddings.append(item["tra_cdr3_embedding"])
-            tra_cdr3_sequence.append(item["tra_cdr3_sequence"])
+            epitope_physico.append(item["epitope_physico"])
             trb_cdr3_embeddings.append(item["trb_cdr3_embedding"])
             trb_cdr3_sequence.append(item["trb_cdr3_sequence"])
-            epitope_physico.append(item["epitope_physico"])
-            tra_physico.append(item["tra_physico"])
             trb_physico.append(item["trb_physico"])
-            v_alpha.append(item["v_alpha"])
-            j_alpha.append(item["j_alpha"])
             v_beta.append(item["v_beta"])
             j_beta.append(item["j_beta"])
             mhc.append(item["mhc"])
@@ -84,17 +80,13 @@ class PadCollate:
             ])
 
         epitope_embeddings = pad_embeddings(epitope_embeddings)
-        tra_cdr3_embeddings = pad_embeddings(tra_cdr3_embeddings)
         trb_cdr3_embeddings = pad_embeddings(trb_cdr3_embeddings)
 
-        v_alpha = torch.tensor(v_alpha, dtype=torch.int32)
-        j_alpha = torch.tensor(j_alpha, dtype=torch.int32)
         v_beta = torch.tensor(v_beta, dtype=torch.int32)
         j_beta = torch.tensor(j_beta, dtype=torch.int32)
         mhc = torch.tensor(mhc, dtype=torch.int32)
 
         epitope_physico = torch.stack(epitope_physico)
-        tra_physico = torch.stack(tra_physico)
         trb_physico = torch.stack(trb_physico)
 
         labels = torch.stack(labels)
@@ -102,15 +94,10 @@ class PadCollate:
         return {
             "epitope_embedding": epitope_embeddings,
             "epitope_sequence": epitope_sequence,
-            "tra_cdr3_embedding": tra_cdr3_embeddings,
-            "tra_cdr3_sequence": tra_cdr3_sequence,
+            "epitope_physico": epitope_physico, 
             "trb_cdr3_embedding": trb_cdr3_embeddings,
             "trb_cdr3_sequence": trb_cdr3_sequence,
-            "epitope_physico": epitope_physico, 
-            "tra_physico": tra_physico,
             "trb_physico": trb_physico,
-            "v_alpha": v_alpha,
-            "j_alpha": j_alpha,
             "v_beta": v_beta,
             "j_beta": j_beta,
             "mhc": mhc,
@@ -134,12 +121,19 @@ def get_embed_len(df, column_name):
     return len(list_of_column)
 
 
-def main(): 
+def main():
+    precision = "allele" # or gene
+    physico_base_dir = f"/teamspace/studios/this_studio/BA_ZHAW/data/physicoProperties"
+    # physico_base_dir = f"../../data/physicoProperties"
+    embed_base_dir = f"/teamspace/studios/this_studio/BA_ZHAW/data/embeddings/beta/{precision}"
+    # embed_base_dir = f"../../data/embeddings/beta/{precision}"
+    hyperparameter_tuning_with_WnB = False
+
     # -----------------------------------------------------------------------------
     # W&B Setup
     # -----------------------------------------------------------------------------
-    print(f"very last call :S")
-    experiment_name = f"Experiment (gene new) - {MODEL_NAME}"
+
+    experiment_name = f"Experiment - {MODEL_NAME}"
     load_dotenv()
     PROJECT_NAME = os.getenv("MAIN_PROJECT_NAME")
     print(f"PROJECT_NAME: {PROJECT_NAME}")
@@ -150,13 +144,9 @@ def main():
     # data (from W&B)
     # -----------------------------------------------------------------------------
     # Download corresponding artifact (= dataset) from W&B
-    # precision = "gene" # or allele
-    precision = "allele"
-    print(f"precision: {precision}")
-    print("Architecture w/ only one Transformer Block")
-    dataset_name = f"paired_{precision}"
+    dataset_name = f"beta_{precision}"
     artifact = run.use_artifact(f"{dataset_name}:latest")
-    data_dir = artifact.download(f"./WnB_Experiments_Datasets/paired_{precision}")
+    data_dir = artifact.download(f"./WnB_Experiments_Datasets/{dataset_name}")
     
     train_file_path = f"{data_dir}/{precision}/train.tsv"
     test_file_path = f"{data_dir}/{precision}/test.tsv"
@@ -167,39 +157,28 @@ def main():
     df_val = pd.read_csv(val_file_path, sep="\t")
     df_full = pd.concat([df_train, df_test, df_val])
     
-    traV_dict = column_to_dictionray(df_full, "TRAV")
-    traJ_dict = column_to_dictionray(df_full, "TRAJ")
     trbV_dict = column_to_dictionray(df_full, "TRBV")
     trbJ_dict = column_to_dictionray(df_full, "TRBJ")
-    mhc_dict = column_to_dictionray(df_full, "MHC")
+    mhc_dict = column_to_dictionray(df_full, "MHC")           
     
-    traV_embed_len = get_embed_len(df_full, "TRAV")
-    traJ_embed_len = get_embed_len(df_full, "TRAJ")
     trbV_embed_len = get_embed_len(df_full, "TRBV")
     trbJ_embed_len = get_embed_len(df_full, "TRBJ")
     mhc_embed_len = get_embed_len(df_full, "MHC")
 
-    physico_base_dir = "/teamspace/studios/this_studio/BA/physico"
+    train_physico_epi = f"{physico_base_dir}/scaled_train_beta_epitope_{precision}_physico.npz"
+    train_physico_trb = f"{physico_base_dir}/scaled_train_beta_TRB_{precision}_physico.npz"
+    test_physico_epi = f"{physico_base_dir}/scaled_test_beta_epitope_{precision}_physico.npz"
+    test_physico_trb = f"{physico_base_dir}/scaled_test_beta_TRB_{precision}_physico.npz"
+    val_physico_epi = f"{physico_base_dir}/scaled_validation_beta_epitope_{precision}_physico.npz"
+    val_physico_trb = f"{physico_base_dir}/scaled_validation_beta_TRB_{precision}_physico.npz"
 
-    train_physico_epi = f"{physico_base_dir}/scaled_train_paired_epitope_{precision}_physico.npz"
-    train_physico_tra = f"{physico_base_dir}/scaled_train_paired_TRA_{precision}_physico.npz"
-    train_physico_trb = f"{physico_base_dir}/scaled_train_paired_TRB_{precision}_physico.npz"
-    test_physico_epi = f"{physico_base_dir}/scaled_test_paired_epitope_{precision}_physico.npz"
-    test_physico_tra = f"{physico_base_dir}/scaled_test_paired_TRA_{precision}_physico.npz"
-    test_physico_trb = f"{physico_base_dir}/scaled_test_paired_TRB_{precision}_physico.npz"
-    val_physico_epi = f"{physico_base_dir}/scaled_validation_paired_epitope_{precision}_physico.npz"
-    val_physico_tra = f"{physico_base_dir}/scaled_validation_paired_TRA_{precision}_physico.npz"
-    val_physico_trb = f"{physico_base_dir}/scaled_validation_paired_TRB_{precision}_physico.npz"
-
-    embed_base_dir = "/teamspace/studios/this_studio/BA/paired"
-
-    train_dataset = PairedPhysico(train_file_path, embed_base_dir, train_physico_epi, train_physico_tra, train_physico_trb, traV_dict, traJ_dict, trbV_dict, trbJ_dict, mhc_dict)
-    test_dataset = PairedPhysico(test_file_path, embed_base_dir, test_physico_epi, test_physico_tra, test_physico_trb, traV_dict, traJ_dict, trbV_dict, trbJ_dict, mhc_dict)
-    val_dataset = PairedPhysico(val_file_path, embed_base_dir, val_physico_epi, val_physico_tra, val_physico_trb, traV_dict, traJ_dict, trbV_dict, trbJ_dict, mhc_dict)
+    train_dataset = BetaPhysico(train_file_path, embed_base_dir, train_physico_epi, train_physico_trb, trbV_dict, trbJ_dict, mhc_dict)
+    test_dataset = BetaPhysico(test_file_path, embed_base_dir, test_physico_epi, test_physico_trb, trbV_dict, trbJ_dict, mhc_dict)
+    val_dataset = BetaPhysico(val_file_path, embed_base_dir, val_physico_epi, val_physico_trb, trbV_dict, trbJ_dict, mhc_dict)
 
     SEQ_MAX_LENGTH = max(train_dataset.get_max_length(), test_dataset.get_max_length(), val_dataset.get_max_length())
     print(f"this is SEQ_MAX_LENGTH: {SEQ_MAX_LENGTH}")
-    
+
     pad_collate = PadCollate(SEQ_MAX_LENGTH).pad_collate
 
     # For reproducability
@@ -222,6 +201,7 @@ def main():
         sampler=val_sampler,
         num_workers=NUM_WORKERS,
         collate_fn=pad_collate,
+
     )
 
     test_dataloader = DataLoader(
@@ -234,16 +214,17 @@ def main():
     # ---------------------------------------------------------------------------------
     # model 
     # ---------------------------------------------------------------------------------
-    hyperparameters = set_hyperparameters(config)
-    '''
-    hyperparameters = {}
-    hyperparameters["optimizer"] = "sgd"
-    hyperparameters["learning_rate"] = 0.007810281400752681
-    hyperparameters["weight_decay"] = 0.009146917668628398
-    hyperparameters["dropout_attention"] = 0.14051600390758243
-    hyperparameters["dropout_linear"] = 0.4620213627675807
-    '''
-    model = PhysicoModel(EMBEDDING_SIZE, SEQ_MAX_LENGTH, DEVICE, traV_embed_len, traJ_embed_len, trbV_embed_len, trbJ_embed_len, mhc_embed_len, hyperparameters)
+    if hyperparameter_tuning_with_WnB:
+        hyperparameters = set_hyperparameters(config)
+    else:
+        hyperparameters = {}
+        hyperparameters["optimizer"] = "adam"
+        hyperparameters["learning_rate"] = 5e-3
+        hyperparameters["weight_decay"] = 0.075
+        hyperparameters["dropout_attention"] = 0.3
+        hyperparameters["dropout_linear"] = 0.45
+    
+    model = BetaPhysicoModel(EMBEDDING_SIZE, SEQ_MAX_LENGTH, DEVICE, trbV_embed_len, trbJ_embed_len, mhc_embed_len, hyperparameters)
     # ---------------------------------------------------------------------------------
     # training
     # ---------------------------------------------------------------------------------
@@ -254,7 +235,7 @@ def main():
     tensorboard_logger = TensorBoardLogger("tb_logs", name=f"{MODEL_NAME}")
 
     # Callbacks
-    run_name = wandb.run.name 
+    run_name = wandb.run.name  
     checkpoint_dir = f"checkpoints/{run_name}"
     model_checkpoint = ModelCheckpoint(
         dirpath=checkpoint_dir,
@@ -265,25 +246,26 @@ def main():
     )
 
     early_stopping = EarlyStopping(
-        monitor='AP_Val',  
-        patience=15,        
+        monitor="AP_Val",  
+        patience=5,        
         verbose=True,
-        mode='max'        
+        mode="max"        
     )
-    print("patience = 15")
 
-    lr_monitor = LearningRateMonitor(logging_interval='epoch')
+    lr_monitor = LearningRateMonitor(logging_interval="epoch")
     swa = StochasticWeightAveraging(swa_lrs=hyperparameters["learning_rate"]*0.1, swa_epoch_start=45)
-    
+
     # Training
     trainer = pl.Trainer(
         max_epochs=EPOCHS,
         logger=[wandb_logger, tensorboard_logger],
-        callbacks=[model_checkpoint, early_stopping, lr_monitor, swa], 
+        callbacks=[model_checkpoint, early_stopping, lr_monitor, swa],  
         accelerator="gpu",
     )
-    
+
     trainer.fit(model, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)
+    best_model_path = model_checkpoint.best_model_path
+    print(f"Best model saved at {best_model_path}")
     # Testing
     test_RES = trainer.test(model, dataloaders=test_dataloader)
     print(f"test_RES: {test_RES}")
@@ -294,10 +276,10 @@ def main():
     # ---------------------------------------------------------------------------------
     # save model
     # ---------------------------------------------------------------------------------
-    MODEL_OUT = f"physico_models/{MODEL_NAME}_{run_name}.pth"
     torch.save(model.state_dict(), MODEL_OUT)
     print(f"Saved PyTorch Model State to {MODEL_OUT}")
 
 
 if __name__ == '__main__':
     main()
+

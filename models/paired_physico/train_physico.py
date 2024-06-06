@@ -134,7 +134,14 @@ def get_embed_len(df, column_name):
     return len(list_of_column)
 
 
-def main(): 
+def main():
+    precision = "allele" # or gene
+    physico_base_dir = f"/teamspace/studios/this_studio/BA_ZHAW/data/physicoProperties"
+    # physico_base_dir = f"../../data/physicoProperties"
+    embed_base_dir = f"/teamspace/studios/this_studio/BA_ZHAW/data/embeddings/paired/{precision}"
+    # embed_base_dir = f"../../data/embeddings/paired/{precision}"
+    hyperparameter_tuning_with_WnB = False
+
     # -----------------------------------------------------------------------------
     # W&B Setup
     # -----------------------------------------------------------------------------
@@ -150,8 +157,6 @@ def main():
     # data (from W&B)
     # -----------------------------------------------------------------------------
     # Download corresponding artifact (= dataset) from W&B
-    precision = "gene" # or allele
-    # precision = "allele"
     print(f"precision: {precision}")
     dataset_name = f"paired_{precision}"
     artifact = run.use_artifact(f"{dataset_name}:latest")
@@ -178,8 +183,6 @@ def main():
     trbJ_embed_len = get_embed_len(df_full, "TRBJ")
     mhc_embed_len = get_embed_len(df_full, "MHC")
 
-    physico_base_dir = "/teamspace/studios/this_studio/BA/physico"
-
     train_physico_epi = f"{physico_base_dir}/scaled_train_paired_epitope_{precision}_physico.npz"
     train_physico_tra = f"{physico_base_dir}/scaled_train_paired_TRA_{precision}_physico.npz"
     train_physico_trb = f"{physico_base_dir}/scaled_train_paired_TRB_{precision}_physico.npz"
@@ -189,8 +192,6 @@ def main():
     val_physico_epi = f"{physico_base_dir}/scaled_validation_paired_epitope_{precision}_physico.npz"
     val_physico_tra = f"{physico_base_dir}/scaled_validation_paired_TRA_{precision}_physico.npz"
     val_physico_trb = f"{physico_base_dir}/scaled_validation_paired_TRB_{precision}_physico.npz"
-
-    embed_base_dir = "/teamspace/studios/this_studio/BA/paired"
 
     train_dataset = PairedPhysico(train_file_path, embed_base_dir, train_physico_epi, train_physico_tra, train_physico_trb, traV_dict, traJ_dict, trbV_dict, trbJ_dict, mhc_dict)
     test_dataset = PairedPhysico(test_file_path, embed_base_dir, test_physico_epi, test_physico_tra, test_physico_trb, traV_dict, traJ_dict, trbV_dict, trbJ_dict, mhc_dict)
@@ -233,15 +234,17 @@ def main():
     # ---------------------------------------------------------------------------------
     # model 
     # ---------------------------------------------------------------------------------
-    hyperparameters = set_hyperparameters(config)
-    '''
-    hyperparameters = {}
-    hyperparameters["optimizer"] = "sgd"
-    hyperparameters["learning_rate"] = 0.007810281400752681
-    hyperparameters["weight_decay"] = 0.009146917668628398
-    hyperparameters["dropout_attention"] = 0.14051600390758243
-    hyperparameters["dropout_linear"] = 0.4620213627675807
-    '''
+    if hyperparameter_tuning_with_WnB:
+        hyperparameters = set_hyperparameters(config)
+    else:
+        hyperparameters = {}
+        hyperparameters["optimizer"] = "sgd"
+        hyperparameters["learning_rate"] = 0.007810281400752681
+        hyperparameters["weight_decay"] = 0.009146917668628398
+        hyperparameters["dropout_attention"] = 0.14051600390758243
+        hyperparameters["dropout_linear"] = 0.4620213627675807
+
+        
     model = PhysicoModel(EMBEDDING_SIZE, SEQ_MAX_LENGTH, DEVICE, traV_embed_len, traJ_embed_len, trbV_embed_len, trbJ_embed_len, mhc_embed_len, hyperparameters)
     # ---------------------------------------------------------------------------------
     # training
