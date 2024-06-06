@@ -123,10 +123,8 @@ def get_embed_len(df, column_name):
 
 def main():
     precision = "allele" # or gene
-    physico_base_dir = f"/teamspace/studios/this_studio/BA_ZHAW/data/physicoProperties"
-    # physico_base_dir = f"../../data/physicoProperties"
-    embed_base_dir = f"/teamspace/studios/this_studio/BA_ZHAW/data/embeddings/beta/{precision}"
-    # embed_base_dir = f"../../data/embeddings/beta/{precision}"
+    physico_base_dir = f"../../data/physicoProperties"
+    embed_base_dir = f"../../data/embeddings/beta/{precision}"
     hyperparameter_tuning_with_WnB = False
 
     # -----------------------------------------------------------------------------

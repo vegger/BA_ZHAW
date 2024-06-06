@@ -106,8 +106,7 @@ def get_embed_len(df, column_name):
 
 def main():
     precision = "allele" # or gene
-    embed_base_dir = f"/teamspace/studios/this_studio/BA_ZHAW/data/embeddings/beta/{precision}"
-    # embed_base_dir = f"../../data/embeddings/beta/{precision}"
+    embed_base_dir = f"../../data/embeddings/beta/{precision}"
     hyperparameter_tuning_with_WnB = False
 
     # -----------------------------------------------------------------------------
