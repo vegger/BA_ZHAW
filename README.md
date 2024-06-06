@@ -34,11 +34,17 @@ To run this project, you will need to add the following environment variable to 
 This environment variable should reflect how your project is named in your Weights & Biases account.
 
 ### Conda Environment
-We recommend to have Anaconda installed which provides package, dependency, and environment management for any language. To import the conda environment, execute the following command in the root folder of this project.
+We recommend to have Anaconda installed which provides package, dependency, and environment management for any language. To import the conda environment, execute the following command in the root folder of this project and activate it.
+The name of the environment should be preserved and is called BA_ZHAW.
 ```bash
 conda env create -n BA_ZHAW --file ENV.yml
+conda activate BA_ZHAW
 ```
-The name of the environment should be preserved and is called BA_ZHAW.\
+Install the necessary pip packages.
+```bash
+pip install tidytcells
+pip install peptides
+```
 As the pytorch installation isn't cross-compatible with every device, we suggest to reinstall it properly. First uninstall it.
 ```bash
 conda uninstall pytorch -y
