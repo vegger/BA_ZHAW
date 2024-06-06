@@ -144,7 +144,7 @@ def main():
     # W&B Setup
     # -----------------------------------------------------------------------------
     print(f"last call")
-    experiment_name = f"Experiment (last call gene) - {MODEL_NAME}"
+    experiment_name = f"Experiment - {MODEL_NAME}"
     load_dotenv()
     PROJECT_NAME = os.getenv("MAIN_PROJECT_NAME")
     print(f"PROJECT_NAME: {PROJECT_NAME}")
