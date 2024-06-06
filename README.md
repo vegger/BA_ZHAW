@@ -15,10 +15,9 @@ The data is standardized, harmonized, and split into training, validation, and t
 Various deep learning architectures are explored, including transformers, convolutional neural networks (CNNs), and attention-based models. The [Model Training](#train-a-model) section explains how the training works in this project.
 
 ### Repository Structure
-`data/`: This will be used to store data locally
-`data_scripts/`: Contains all scripts related to data acquisition, preprocessing and analyzing
-`models/`: Includes different model architectures and training scripts
-``
+`data/`: This will be used to store data locally\
+`data_scripts/`: Contains all scripts related to data acquisition, preprocessing and analyzing\
+`models/`: Includes different model architectures and training scripts\
 
 ## Prerequisites
 The following requirements must be met in order to work with this project.
