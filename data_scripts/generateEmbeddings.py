@@ -4,6 +4,7 @@ import gc
 import argparse
 import re
 import torch 
+import os
 from transformers import pipeline, T5Tokenizer, T5EncoderModel
 
 
@@ -58,13 +59,11 @@ if __name__ == "__main__":
     parser.add_argument('input_file_name', type=str, help="The file name of the dataset.")
     parser.add_argument('output_file_name', type=str, help="The name of the output file (TRB_beta_embeddings.npz)")
     parser.add_argument('column_name', type=str, help="The column name containing the sequences.")
-    parser.add_argument('--prefix', type=str, default="embeddings_", help="Prefix for the output file.")
 
     args = parser.parse_args()
 
-    df = load_data(args.file_name)
-    file_name = args.prefix + "embeddings.npz"
-    to_path = f"./{args.chain}/"
+    df = load_data(args.input_file_name)
+    output_file_name = args.output_file_name
     sequences = set(df[args.column_name].to_list())
     processed_sequences = [(sequence, " ".join(list(re.sub(r"[UZOB]", "X", sequence)))) for sequence in sequences]
 
@@ -77,4 +76,6 @@ if __name__ == "__main__":
         batch_embeddings = process_batch(batch_sequences)
         sequence_to_embedding.update(batch_embeddings)
 
-    np.savez(to_path+file_name, **sequence_to_embedding)
+    if not os.path.exists(os.path.dirname(output_file_name)):
+      os.makedirs(os.path.dirname(output_file_name))
+    np.savez(output_file_name, **sequence_to_embedding)
