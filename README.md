@@ -60,7 +60,7 @@ conda install numpy
 pip install python-dotenv
 pip install nbformat
 pip install tidytcells
-Conda install pandas
+conda install pandas
 pip install peptides
 conda install wandb --channel conda-forge
 conda install conda-forge::pytorch-lightning
