@@ -3,10 +3,10 @@
 - [@cyrilgabriele](https://www.github.com/cyrilgabriele)
 
 ## About this project
-This project is part of the authors' bachelor thesis, which is about predicting TCR-Epitope binding affinity for advanced immunotherapy. The aim of this thesis is to develop machine learning models capable of accurately predicting the binding between T cell receptors (TCRs) and peptide-major histocompatibility complexes (pMHCs), thereby advancing personalized immunotherapy. By leveraging deep learning techniques, the project addresses the challenges posed by the highly individualistic nature of the human immune system and the lack of diverse, comprehensive datasets.
+This project is part of the authors' Bachelor's thesis, which is about predicting TCR-Epitope binding affinity for advanced immunotherapy. The aim of this thesis is to develop machine learning models capable of predicting the binding between T cell receptors (TCRs) and peptide-major histocompatibility complexes (pMHCs), thereby advancing personalized immunotherapy. By leveraging deep learning techniques, the project addresses the challenges posed by the highly individualistic nature of the human immune system and the lack of diverse, comprehensive datasets.
 
 ### Data Sources
-The primary sources of data include [VDJdb](https://vdjdb.cdr3.net/), [McPAS-TCR](http://friedmanlab.weizmann.ac.il/McPAS-TCR/), and [IEDB](https://www.iedb.org/), which provide sequences and binding data for TCRs and pMHCs.
+The primary sources of data include [VDJdb](https://vdjdb.cdr3.net/), [McPAS-TCR](http://friedmanlab.weizmann.ac.il/McPAS-TCR/), and [IEDB](https://www.iedb.org/), which provide sequences and true postitive binding data for TCRs and pMHCs.
 
 ### Data Processing
 The data is standardized, harmonized, and split into training, validation, and test sets. Negative samples are synthetically generated to ensure a balanced dataset. The [Data Pipeline](#run-data-pipeline) section explains how you can run the data pipeline locally.
