@@ -99,18 +99,28 @@ pip install sentencepiece
   - `./models/physico/train_physico.py`
   - `./models/vanilla/train_vanilla.py`
 - Open the train skript of your choice and head to the top of the main function.
-  - set precision variable
+  - set `precision variable`
   - If you had to change to an absolute path in the data pipeline:
     - change `embed_base_dir` to an absolute path
     - change `physico_base_dir` to an absolute path if you train either `train_beta_physico.py` or `train_physico.py`
   - If you want to do hyperparameter tuning with Weights & Biases sweeps
     - change `hyperparameter_tuning_with_WnB` to True
-
-To reproduce the results of the thesis, the checkpoints need to be further trained. These checkpoints are not the final model; rather, they are saved at the point where the AP_Val metric was at its highest. Use the corresponding train script and run until it stops, the resulting .pth file is then the final model. 
+  - Otherwise set the specific hyperparamter values in the train script:
+  
+    ```
+    # ! here random hyperparameter values set !
+    hyperparameters["optimizer"] = "adam"
+    hyperparameters["learning_rate"] = 5e-3
+    hyperparameters["weight_decay"] = 0.075
+    hyperparameters["dropout_attention"] = 0.3
+    hyperparameters["dropout_linear"] = 0.45
+    ```
+    
+  - After training one can see the checkpoint file, saved at the point where the AP_Val metric was at its highest. Furthermore, the file with the `.pth` extension is the final model.
 
 ## Additional Data
 Prebuilt Embeddings, Models, ModelRuns and Physicochemical Properties are shared over [sharepoint](https://zhaw-my.sharepoint.com/:u:/g/personal/eggerval_students_zhaw_ch/EaZpwuhuUn9DpY6PcXrmrgEB5K-Qw5Git-W7o914mMRa_w?e=dQxMjw). Feel free to download.<br>
-The provided models are checkpoints evaluated at the AP Val maximum point. These need to be trained further to get the same outputs as in the work. This has been decided so that they can be used as a starting point for task-specific training (TPP).
+The provided models are checkpoints evaluated at the AP_Val maximum point. These need to be trained further to get the same outputs as in the work. This has been decided so that they can be used as a starting point for task-specific training (TPP).
 
 ## Disclaimer
 - The data pipeline and the model trainings were executed in the [lightning.ai](https://lightning.ai/) environment. Sometimes there were Cuda memory errors, then the VM had to be restarted for it to work again.
