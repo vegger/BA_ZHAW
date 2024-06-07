@@ -106,6 +106,8 @@ pip install sentencepiece
   - If you want to do hyperparameter tuning with Weights & Biases sweeps
     - change `hyperparameter_tuning_with_WnB` to True
 
+To reproduce the results of the thesis, the checkpoints need to be further trained. These checkpoints are not the final model; rather, they are saved at the point where the AP_Val metric was at its highest. Use the corresponding train script and run until it stops, the resulting .pth file is then the final model. 
+
 ## Additional Data
 Prebuilt Embeddings, Models, ModelRuns and Physicochemical Properties are shared over [sharepoint](https://zhaw-my.sharepoint.com/:u:/g/personal/eggerval_students_zhaw_ch/EaZpwuhuUn9DpY6PcXrmrgEB5K-Qw5Git-W7o914mMRa_w?e=dQxMjw). Feel free to download.<br>
 The provided models are checkpoints evaluated at the AP Val maximum point. These need to be trained further to get the same outputs as in the work. This has been decided so that they can be used as a starting point for task-specific training (TPP).
@@ -113,7 +115,6 @@ The provided models are checkpoints evaluated at the AP Val maximum point. These
 ## Disclaimer
 - The data pipeline and the model trainings were executed in the [lightning.ai](https://lightning.ai/) environment. Sometimes there were Cuda memory errors, then the VM had to be restarted for it to work again.
 - In Windows environment it was observed that the creation of the PhysicoChemical properties can lead to problems, in this case Assertion Error is thrown, which says that a scalar has the length 88 instead of 101. The authors are thrilled to know why.
-- **Attention** if one uses a legacy checkpoint of the Paired Vanilla model (vanilla_model.py) provided in the shared files. The checkpoints contain a unnecessary building block, namely "multihead_attn_physico" which must NOT be used. Filter therefore the state_dict, as shown in the vanilla_evaluate.py:
+- **Attention** if one uses a legacy checkpoint of the Paired Vanilla model (vanilla_model.py) provided in the shared files. The checkpoints contain a unnecessary building block, namely "multihead_attn_physico" which must **NOT** be used. Filter therefore the state_dict, as shown after if one would use the checkpoints to reproduce the results:
   
   `filtered_state_dict = {k: v for k, v in state_dict.items() if "multihead_attn_physico" not in k}`
-
