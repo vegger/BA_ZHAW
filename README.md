@@ -12,7 +12,7 @@ The primary sources of data include [VDJdb](https://vdjdb.cdr3.net/), [McPAS-TCR
 The data is standardized, harmonized, and split into training, validation, and test sets. Negative samples are synthetically generated to ensure a balanced dataset. The [Data Pipeline](#run-data-pipeline) section explains how you can run the data pipeline locally.
 
 ### Model Architectures
-Various deep learning architectures are explored, including transformers, convolutional neural networks (CNNs), and attention-based models. The [Model Training](#train-a-model) section explains how the training works in this project.
+Various deep learning architectures are explored, including attention-based models. The [Model Training](#train-a-model) section explains how the training works in this project.
 
 ### Repository Structure
 `data/`: This will be used to store data locally\
@@ -113,3 +113,7 @@ The provided models are checkpoints evaluated at the AP Val maximum point. These
 ## Disclaimer
 - The data pipeline and the model trainings were executed in the [lightning.ai](https://lightning.ai/) environment. Sometimes there were Cuda memory errors, then the VM had to be restarted for it to work again.
 - In Windows environment it was observed that the creation of the PhysicoChemical properties can lead to problems, in this case Assertion Error is thrown, which says that a scalar has the length 88 instead of 101. The authors are thrilled to know why.
+- **Attention** if one uses a legacy checkpoint of the Paired Vanilla model (vanilla_model.py) provided in the shared files. The checkpoints contain a unnecessary building block, namely "multihead_attn_physico" which must NOT be used. Filter therefore the state_dict, as shown in the vanilla_evaluate.py:
+  
+  `filtered_state_dict = {k: v for k, v in state_dict.items() if "multihead_attn_physico" not in k}`
+
