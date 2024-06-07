@@ -116,7 +116,7 @@ pip install sentencepiece
     hyperparameters["dropout_linear"] = 0.45
     ```
     
-  - After training one can see the checkpoint file, saved at the point where the AP_Val metric was at its highest. Furthermore, the file with the `.pth` extension is the final model.
+  - After training one can see the checkpoint file (`.ckpt`) in the directory `checkpoints` in a directory named like the Weights & Biases run. The checkoint is saved at the point where the AP_Val metric was at its highest. Furthermore, the file with the `.pth` extension is the final model.
 
 ## Additional Data
 Prebuilt Embeddings, Models, ModelRuns and Physicochemical Properties are shared over [sharepoint](https://zhaw-my.sharepoint.com/:u:/g/personal/eggerval_students_zhaw_ch/EaZpwuhuUn9DpY6PcXrmrgEB5K-Qw5Git-W7o914mMRa_w?e=dQxMjw). Feel free to download.<br>
